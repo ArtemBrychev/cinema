@@ -1,0 +1,33 @@
+.iframeContainerStyles {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+  }
+
+.iframeStyles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  };
+
+.playerStyles {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+    padding-top: 70px;
+  };
+
+.titleStyles {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    font-weight: bold;
+    padding-top: 60px;
+  };

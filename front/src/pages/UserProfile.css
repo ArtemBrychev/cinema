@@ -1,0 +1,15 @@
+.UserPhotoStyle {
+    width: 300px;
+    height: 300px;
+    
+}
+
+.ButtonsStyle {
+    margin-top: 20px;
+    margin-right: 32px;
+}
+
+.UserDescriptionStyle {
+    overflow: auto;
+    height: 100px;
+}
