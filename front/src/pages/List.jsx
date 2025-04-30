@@ -1,22 +1,43 @@
-import { Link, Route } from 'react-router-dom';
-import { Row, Col, Container } from "react-bootstrap";
-import "../components/MovieCard";
+import { useEffect, useState } from 'react';
+import { Row, Col } from "react-bootstrap";
 import MovieCard from '../components/MovieCard';
 
-const movies = [
-  { id: 1, title: 'Интерстеллар', description: 'Когда засуха, пыльные бури и вымирание растений приводят человечество к продовольственному кризису, коллектив исследователей и учёных отправляется сквозь червоточину (которая предположительно соединяет области пространства-времени через большое расстояние) в путешествие, чтобы превзойти прежние ограничения для космических путешествий человека и найти планету с подходящими для человечества условиями.' },
-  { id: 2, title: 'Начало', description: 'в недалёком будущем промышленный шпионаж разовьётся до такой степени, что шпионы смогут извлекать информацию прямо из мозга человека, пока он спит. Специалист в этой области Доминик Кобб получает сложный заказ: не просто выведать секрет у сына энергетического магната, а внушить ему мысль, которая разрушит империю, созданную отцом. В награду с Кобба будут сняты обвинения в убийстве жены, и он сможет вернуться в США, где остались его дети.' },
-  { id: 3, title: 'Оппенгеймер', description: 'эпический биографический драматический фильм 2023 года режиссёра Кристофера Нолана. **В нём рассказывается о жизни Дж. Роберта Оппенгеймера**, американского физика-теоретика, который помог разработать первое ядерное оружие во время Второй мировой войны.' },
-];
-
 function List() {
+  const [movies, setMovies] = useState([]);  // Состояние для фильмов
+  const [categoryId, setCategoryId] = useState(null); // Здесь можно хранить ID категории, если нужно
+
+  // Функция для получения данных с сервера
+  const fetchMovies = async () => {
+    try {
+      let url = "/api/films"; // Базовый URL
+      if (categoryId) {
+        url += `?categoryId=${categoryId}`;  // Если есть categoryId, добавляем его как query параметр
+      }
+
+      console.log("Запрос: ", url)
+      const response = await fetch(url);  // Делаем GET запрос
+      if (!response.ok) {
+        throw new Error('Ошибка при получении фильмов');
+      }
+      
+      const data = await response.json();  // Получаем JSON из ответа
+      setMovies(data);  // Обновляем состояние, чтобы отобразить фильмы
+    } catch (error) {
+      console.error("Ошибка:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMovies(); // Запрашиваем фильмы при загрузке компонента
+  }, [categoryId]); // Если categoryId изменяется, повторно запрашиваем данные
+
   return (
     <div>
       <h1>Список фильмов</h1>
       <Row md={1} className='mb-2'>
         {movies.map((movie) => (
-          <Col className='px-2 border'>
-            <MovieCard key={movie.id} movie={movie}/>
+          <Col className='px-2 border' key={movie.id}>
+            <MovieCard movie={movie} />
           </Col>
         ))}
       </Row>

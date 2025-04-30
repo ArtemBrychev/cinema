@@ -5,13 +5,13 @@ import {Link} from 'react-router-dom';
 
 
 const MovieCard = ({movie}) => {
-    const {id, title, description} = movie;
+    const {id, name, director, description} = movie;
   
     return (
     <Card style={{ width: '100%' }} border='0'>
       <Card.Body>
-        <Card.Title>{title}</Card.Title>
-        <Card.Subtitle className="mb-2 text-muted">Пусто</Card.Subtitle>
+        <Card.Title>{name}</Card.Title>
+        <Card.Subtitle className="mb-2 text-muted">{director}</Card.Subtitle>
         <Card.Text>{description}
         </Card.Text>
         <Button variant='primary' as={Link} to={`/player/${id}`} >Смотреть</Button>

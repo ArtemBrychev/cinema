@@ -1,0 +1,9 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.jdt.ls.vmargs": "-Xmx512m -Xms128m",
+    "java.autobuild.enabled": false,
+    "java.referencesCodeLens.enabled": false,
+    "java.implementationsCodeLens.enabled": false,
+    "java.dependencies.autoReload": false
+
+}
