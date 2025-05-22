@@ -29,7 +29,9 @@ import jakarta.persistence.EntityManagerFactory;
 @EnableTransactionManagement
 @ComponentScan({
     "com.cinema.project.controllers",
-     "com.cinema.project.repositories"})
+     "com.cinema.project.repositories",
+    "com.cinema.project.services",
+    "com.cinema.project.security"})
 public class AppConfig implements WebMvcConfigurer{
 
     @Override
@@ -69,10 +71,5 @@ public class AppConfig implements WebMvcConfigurer{
         JpaTransactionManager txManager = new JpaTransactionManager();
         txManager.setEntityManagerFactory(entityManagerFactory);
         return txManager;
-    }
-
-    @Bean
-    public FilmService filmService(FilmRepository filmRepository){
-        return new FilmService(filmRepository);
     }
 }

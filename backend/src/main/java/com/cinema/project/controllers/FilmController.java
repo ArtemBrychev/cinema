@@ -26,7 +26,7 @@ public class FilmController {
     
     @GetMapping("api/films")
     public List<Film> getFilm(@RequestParam(required=false) Long categoryId){
-        System.out.println("Запрос к фильмам");
+        System.out.println("GET api/films");
         if(categoryId == null){
             return filmService.getFilmList();
         }else{
@@ -36,7 +36,7 @@ public class FilmController {
 
     @GetMapping("api/films/film/{id}")
     public Film getFilmInfo(@PathVariable long id){
-        System.out.println("Запрос к фильму");
+        System.out.println("GET api/films/film/{id}");
         return filmService.getFilmInfo(id);
     }
 }

@@ -1,0 +1,12 @@
+com\cinema\project\entities\Film.class
+com\cinema\project\services\CategoryService.class
+com\cinema\project\repositories\CategoryRepository.class
+com\cinema\project\security\SecurityInitializer.class
+com\cinema\project\entities\Category.class
+com\cinema\project\repositories\FilmRepository.class
+com\cinema\project\services\FilmService.class
+com\cinema\project\Main.class
+com\cinema\project\security\SecurityConfig.class
+com\cinema\project\controllers\CategoryController.class
+com\cinema\project\controllers\FilmController.class
+com\cinema\project\AppConfig.class

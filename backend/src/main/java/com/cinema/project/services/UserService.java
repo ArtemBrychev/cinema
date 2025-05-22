@@ -1,0 +1,104 @@
+package com.cinema.project.services;
+
+import com.cinema.project.dto.UserPrivateResponse;
+import com.cinema.project.dto.UserPublicResponse;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+import javax.management.relation.Role;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cinema.project.dto.UserRequest;
+import com.cinema.project.entities.User;
+import com.cinema.project.repositories.RoleRepository;
+import com.cinema.project.repositories.UserRepository;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Service
+public class UserService{
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    public User findUser(String name){
+        return userRepository.findByName(name);
+    }
+
+    public void createNewUser(User user){
+        System.out.println("createNewUser in UserService");
+        user.setRole(roleRepository.findById((long) 1));
+        userRepository.save(user);
+    }
+
+    public void printListOfUsers(){
+        List<User> users = userRepository.findAll();
+        System.out.println("----------");
+        for(int i = 0; i < users.size(); i++){
+            System.out.println(users.get(i));
+        }
+        System.out.println("----------");
+    }
+
+    public User loadByUsername(String email){
+        return userRepository.findByEmail(email);
+    }
+
+    public boolean checkEmail(String email){
+        if(userRepository.findByEmail(email)==null){
+            return true;
+        }else{
+            return false;
+        }
+        
+    }
+
+    public boolean registerNewUser(UserRequest userRequest){
+        System.out.println("registerNewUser in UserService");
+        User newuser = new User();
+        String encodedpassword = passwordEncoder.encode(userRequest.getPassword());
+        newuser.setEmail(userRequest.getEmail());
+        newuser.setName(userRequest.getName());
+        newuser.setPassword(encodedpassword);
+
+        createNewUser(newuser);
+        return true;
+    }
+
+
+    public ResponseEntity<?> getUserProfileInfo(long id, Principal principal){
+        User requestUser = userRepository.findById(id);
+        User currentUser = userRepository.findByEmail(principal.getName());
+        if (requestUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Пользователь не найден"));
+        }        
+
+        if(requestUser.equals(currentUser)){
+            UserPrivateResponse userPrivateResponse = new UserPrivateResponse();
+            userPrivateResponse.valueOf(currentUser);
+            return ResponseEntity.ok(userPrivateResponse);
+        }else{
+            UserPublicResponse userPublicResponse = new UserPublicResponse();
+            userPublicResponse.valueOf(requestUser);
+            return ResponseEntity.ok(userPublicResponse);
+        }
+    }
+
+    
+}
