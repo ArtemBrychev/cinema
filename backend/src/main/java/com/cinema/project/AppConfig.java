@@ -1,11 +1,15 @@
 package com.cinema.project;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
@@ -20,6 +24,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.cinema.project.repositories.FilmRepository;
 import com.cinema.project.services.FilmService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import jakarta.persistence.EntityManagerFactory;
 
@@ -64,6 +71,15 @@ public class AppConfig implements WebMvcConfigurer{
         factory.setPackagesToScan("com.cinema.project.entities");
         factory.setDataSource(dataSource());
         return factory;
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // чтобы был ISO формат, не числа
+
+        converters.add(new MappingJackson2HttpMessageConverter(mapper));
     }
 
     @Bean

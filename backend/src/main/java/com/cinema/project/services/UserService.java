@@ -36,8 +36,8 @@ public class UserService{
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    public User findUser(String name){
-        return userRepository.findByName(name);
+    public User findUser(long id){
+        return userRepository.findById(id);
     }
 
     public void createNewUser(User user){
@@ -98,6 +98,11 @@ public class UserService{
             userPublicResponse.valueOf(requestUser);
             return ResponseEntity.ok(userPublicResponse);
         }
+    }
+
+
+    public User getUserFromPrincipal(Principal principal){
+        return userRepository.findByEmail(principal.getName());
     }
 
     

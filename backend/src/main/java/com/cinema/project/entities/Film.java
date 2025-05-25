@@ -1,5 +1,7 @@
 package com.cinema.project.entities;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -40,6 +43,12 @@ public class Film {
 
     @Column(name="dislike_count")
     private long dislikeCount;
+
+    @OneToMany(mappedBy = "film")
+    private List<Review> reviews;
+
+    @OneToMany(mappedBy="film")
+    private List<Favourite> Favourites;
 
     // Методы
     public long getId() {

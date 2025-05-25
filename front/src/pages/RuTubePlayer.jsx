@@ -1,55 +1,177 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './RuTubePlayer.css';
-
-
+import ReviewSection from '../components/ReviewSection';
+import { useAuth } from '../context/AuthContext';
 
 function RuTubePlayer() {
-  const { id } = useParams(); // Получаем ID фильма из URL
-
-  const [movie, setMovie] = React.useState("Загрузка...");
-
-  console.log(id);
+  const { id } = useParams();
+  const [movie, setMovie] = useState(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { isAuthenticated, token } = useAuth();
 
   const fetchMovie = async () => {
     try {
-      let url = `/api/films/film/${id}` ; // Базовый URL
+      const response = await fetch(`/api/films/film/${id}`);
+      if (!response.ok) throw new Error('Ошибка при получении фильма');
+      const data = await response.json();
+      setMovie(data);
+    } catch (error) {
+      console.error("Ошибка загрузки фильма:", error);
+      setError('Не удалось загрузить фильм');
+    }
+  };
 
-      console.log("Запрос: ", url)
-      const response = await fetch(url);  // Делаем GET запрос
+  const checkIfLiked = async () => {
+    if (!isAuthenticated || !token) {
+      setIsLiked(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/check/like/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
       if (!response.ok) {
-        throw new Error('Ошибка при получении фильма');
+        if (response.status === 404) {
+          setIsLiked(false);
+          return;
+        }
+        throw new Error('Ошибка при проверке избранного');
       }
       
-      const data = await response.json();  // Получаем JSON из ответа
-      setMovie(data);  // Обновляем состояние, чтобы отобразить фильмы
+      const data = await response.json();
+      setIsLiked(data === true);
     } catch (error) {
-      console.error("Ошибка:", error);
+      console.error('Ошибка проверки избранного:', error);
+      setIsLiked(false);
+    }
+  };
+
+  const handleAddToFavourite = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/newlike/${id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.status === 400) {
+        const data = await response.json();
+        throw new Error(data.error || 'Фильм уже в избранном');
+      }
+      
+      if (!response.ok) {
+        throw new Error('Не удалось добавить в избранное');
+      }
+
+      // Явно устанавливаем состояние без дополнительной проверки
+      setIsLiked(true);
+      
+    } catch (error) {
+      console.error('Ошибка при добавлении в избранное:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFromFavourite = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/delete/like/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Не удалось удалить из избранного');
+      }
+      
+      setIsLiked(false);
+    } catch (error) {
+      console.error('Ошибка при удалении из избранного:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchMovie();
-  }, [id]);
-  
+    
+    if (isAuthenticated) {
+      checkIfLiked();
+    } else {
+      setIsLiked(false);
+    }
+  }, [id, isAuthenticated]);
+
+  if (!movie) {
+    return (
+      <div className="text-center mt-4">
+        {error ? (
+          <div className="alert alert-danger">{error}</div>
+        ) : (
+          'Загрузка фильма...'
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='playerStyles mx-2'>
       <h2 className='titleStyles mt-1'>Фильм: {movie.name}</h2>
+      
       <div className='iframeContainerStyles'>
         <iframe
           className='iframeStyles'
-          src={movie.rutubeLink} 
+          src={movie.rutubeLink}
           frameBorder="0"
           allow="clipboard-write; autoplay"
-          webkitAllowFullScreen
-          mozallowfullscreen
           allowFullScreen
           title="RuTube Video Player"
         ></iframe>
       </div>
-      <h3 className='mt-2'>Описание:</h3>
-      <p>{movie.description}</p>
+
+      <h3 className='mt-3'>Описание:</h3>
+      <p className='mb-4'>{movie.description}</p>
+
+      {error && (
+        <div className="alert alert-warning mb-3">
+          {error}
+        </div>
+      )}
+
+      {isAuthenticated ? (
+        <button
+          onClick={isLiked ? handleRemoveFromFavourite : handleAddToFavourite}
+          disabled={loading}
+          className={`btn ${isLiked ? 'btn-danger' : 'btn-primary'} mb-4`}
+          style={{ minWidth: '200px' }}
+        >
+          {loading ? (
+            <span>
+              {isLiked ? 'Удаление...' : 'Добавление...'}
+            </span>
+          ) : (
+            <span>
+              {isLiked ? 'Удалить из избранного 💔' : 'Добавить в избранное ❤️'}
+            </span>
+          )}
+        </button>
+      ) : (
+        <p className='text-warning mb-4'>
+          Войдите в систему, чтобы добавлять фильмы в избранное
+        </p>
+      )}
+
+      <ReviewSection filmId={id} />
     </div>
   );
 }

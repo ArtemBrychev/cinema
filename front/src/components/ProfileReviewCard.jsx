@@ -12,23 +12,25 @@ const getStyleAndLabel = (rating) => {
   }
 };
 
-const ReviewCard = ({ review }) => {
-  const { userId, userName, reviewText, reviewDate, rating } = review;
+const ProfileReviewCard = ({ review }) => {
+  const { filmId, filmName, reviewText, rating } = review;
   const { backgroundColor, color, label } = getStyleAndLabel(rating);
 
   return (
     <Card style={{ backgroundColor, color }} className="mb-3">
       <Card.Body>
+        <Card.Title>
+          <Link to={`/player/${filmId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+            {filmName}
+          </Link>
+        </Card.Title>
         <Card.Subtitle className="mb-2">
-          <strong>Оценка: {rating}</strong> — {label} от {userName}&nbsp;
+          <strong>Оценка: {rating}</strong> — {label}
         </Card.Subtitle>
         <Card.Text>{reviewText}</Card.Text>
-        <Card.Footer style={{ color: 'rgba(0, 0, 0, 0.5)' }}>
-          Дата отзыва: {reviewDate}
-        </Card.Footer>
       </Card.Body>
     </Card>
   );
 };
 
-export default ReviewCard;
+export default ProfileReviewCard;

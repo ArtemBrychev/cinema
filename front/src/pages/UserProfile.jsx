@@ -3,9 +3,9 @@ import { Row, Col, Image, Button, Spinner, Alert } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import userImage from "../assets/user_placeholder.png";
-import ReviewCard from "../components/ReviewCard";
 import { useAuth } from "../context/AuthContext";
 import "./UserProfile.css";
+import ProfileReviewCard from "../components/ProfileReviewCard"; // Импорт нового компонента
 
 function UserProfile() {
   const { id } = useParams();
@@ -16,6 +16,8 @@ function UserProfile() {
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviews, setReviews] = useState([]); // Новое состояние для отзывов
+  const [reviewsLoading, setReviewsLoading] = useState(false); // Состояние загрузки отзывов
 
   useEffect(() => {
     async function fetchProfile() {
@@ -39,17 +41,17 @@ function UserProfile() {
 
         if (!data || !data.name) {
           setError("Профиль не найден или данные пусты.");
-          setUserData(null);
-          setIsOwner(false);
           setLoading(false);
           return;
         }
 
         setUserData(data);
         setIsOwner(!!data.email);
+        
+        // Загружаем отзывы пользователя
+        fetchUserReviews(id);
       } catch (err) {
         console.error("Ошибка при загрузке профиля:", err);
-
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
           setError("Сессия истекла. Пожалуйста, войдите снова.");
           logout();
@@ -57,16 +59,27 @@ function UserProfile() {
         } else {
           setError(`Ошибка при загрузке: ${err.message || err}`);
         }
-
-        setUserData(null);
-        setIsOwner(false);
       } finally {
         setLoading(false);
       }
     }
 
+    async function fetchUserReviews(userId) {
+      setReviewsLoading(true);
+      try {
+        const response = await axios.get(`/api/user/reviews/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setReviews(response.data);
+      } catch (err) {
+        console.error("Ошибка при загрузке отзывов:", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    }
+
     fetchProfile();
-  }, [id, token]);
+  }, [id, token, logout, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -108,11 +121,13 @@ function UserProfile() {
 
           <div className="mt-4">
             <h3>Отзывы</h3>
-            {userData.reviews && userData.reviews.length > 0 ? (
-              <Row md={1} className="mb-2">
-                {userData.reviews.map((review) => (
-                  <Col className="px-1 border" key={review.id}>
-                    <ReviewCard review={review} />
+            {reviewsLoading ? (
+              <Spinner animation="border" />
+            ) : reviews.length > 0 ? (
+              <Row md={1} className="g-2">
+                {reviews.map((review) => (
+                  <Col key={review.id}>
+                    <ProfileReviewCard review={review} />
                   </Col>
                 ))}
               </Row>
