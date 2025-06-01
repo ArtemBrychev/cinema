@@ -9,6 +9,7 @@ import com.cinema.project.services.ReviewService;
 import com.cinema.project.services.UserService;
 import java.security.Principal;
 import java.util.List;
+import org.apache.catalina.connector.Response;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,5 +48,13 @@ public class ReviewController {
     public List<UserReview> getUserReviews(@PathVariable long id){
         System.out.println("User reviews");
         return reviewService.getReviewListByUser(id);
+    }
+
+    @GetMapping("api/check/review/{id}")
+    public ResponseEntity<Boolean> isReviewed(@PathVariable long id, Principal principal){
+        Boolean k = reviewService.isReviewed(id, principal);
+        System.out.println("check review for film: " + id + "and user: "
+             + userService.getUserFromPrincipal(principal) + " returned: " + k);
+        return ResponseEntity.ok(k);
     }
 }

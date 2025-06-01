@@ -20,7 +20,10 @@ const ReviewCard = ({ review }) => {
     <Card style={{ backgroundColor, color }} className="mb-3">
       <Card.Body>
         <Card.Subtitle className="mb-2">
-          <strong>Оценка: {rating}</strong> — {label} от {userName}&nbsp;
+          <strong>Оценка: {rating}</strong> — {label} от{' '}
+          <Link to={`/user_profile/${userId}`} style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {userName}
+          </Link>
         </Card.Subtitle>
         <Card.Text>{reviewText}</Card.Text>
         <Card.Footer style={{ color: 'rgba(0, 0, 0, 0.5)' }}>

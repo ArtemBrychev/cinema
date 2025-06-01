@@ -52,7 +52,13 @@ public class FavouriteService {
         List<Favourite> list =  favouriteRepisitory.findByUserId(user.getId());
         List<FavouriteResponse> result = new ArrayList<>();
         for(var x : list){
-            result.add(new FavouriteResponse(x));
+            Film favFilm = x.getFilm();
+            FavouriteResponse favouriteResponse = new FavouriteResponse(x);
+            favouriteResponse.setName(favFilm.getName());
+            favouriteResponse.setDescription(favFilm.getDescription());
+            favouriteResponse.setDirector(favFilm.getDirector());
+            System.out.println(favouriteResponse);
+            result.add(favouriteResponse);
         }
 
         return result;

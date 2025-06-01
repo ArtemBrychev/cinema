@@ -7,6 +7,7 @@ import UserProfile from './pages/UserProfile';
 import RegisterForm from './pages/RegisterForm';
 import { AuthProvider } from './context/AuthContext'; // ⬅️ добавили
 import LoginForm from './pages/LoginForm';
+import FavouriteList from './pages/FavouriteList';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/user_profile/:id" element={<UserProfile />} />
             <Route path="/register/" element={<RegisterForm />} />
             <Route path="/login/" element={<LoginForm/>}/>
+            <Route path="/favourites/" element={<FavouriteList/>}/>
           </Routes>
         </Container>
       </Router>

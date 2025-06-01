@@ -1,6 +1,8 @@
 package com.cinema.project.controllers;
 
+import com.cinema.project.dto.PasswordChangeRequest;
 import com.cinema.project.dto.TokenResponse;
+import com.cinema.project.dto.UserNameSettings;
 import com.cinema.project.dto.UserRequest;
 import com.cinema.project.entities.User;
 import com.cinema.project.repositories.UserRepository;
@@ -22,9 +24,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -86,5 +90,33 @@ public class UserController {
                 .body(Map.of("error", "Пользователь с данным логином уже существует"));
         }
 
+    }
+
+    @DeleteMapping("api/delete/user")
+    public ResponseEntity<?> deleteProfile(Principal principal){
+        return userService.deleteUser(principal);
+    }
+
+    @PutMapping("api/change/usernamtus")
+    public ResponseEntity<?> setNameAndStatus(@RequestBody UserNameSettings newdata, Principal principal){
+        User curruser = userService.getUserFromPrincipal(principal);
+        if(curruser!=null){
+            if(newdata.getName()!=null){
+                return userService.changeUserBasicData(newdata, curruser);
+            }else{
+                return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Имя не может быть пустым"));
+            }
+        }else{
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Пользователь не найден"));
+        }
+    }
+
+    @PutMapping("api/change/userpassword")
+    public ResponseEntity<?> changeUserPassword(@RequestBody PasswordChangeRequest passwordRequest, Principal principal){
+        return userService.changePassword(passwordRequest, principal);
     }
 }

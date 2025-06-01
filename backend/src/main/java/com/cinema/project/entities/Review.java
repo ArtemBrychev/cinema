@@ -14,14 +14,6 @@ import java.time.LocalDate;
 @Table(name = "review")
 public class Review {
 
-    /*
-     * Так есть по сути уже два типа дто. UserReview будет еще тем который отправляют с клиента для сохранения отзыва, 
-     * Все еще нужны контроллеры
-     * Есть контроллер который сохраняет новый отзыв, соответственно есть и методы необходимые
-     * Остаются два других контроллера
-    */
-
-
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private long id;
@@ -96,7 +88,7 @@ public class Review {
     @Override
     public String toString(){
         return "Review of user(" + user.getEmail() + 
-            ") to film: " + film.getName() + ". " + 
+            ") to film: " + film.getId() + ". " + 
             "Rating: " + rating + " content: " +
             reviewText + " at " + reviewDate;
     }

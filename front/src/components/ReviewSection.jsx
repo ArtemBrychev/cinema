@@ -8,9 +8,13 @@ function ReviewSection({ filmId }) {
   const [reviews, setReviews] = useState([]);
   const [text, setText] = useState('');
   const [rating, setRating] = useState(3);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [checkingReview, setCheckingReview] = useState(true);
+  
   const { isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
 
+  // Загрузка всех отзывов к фильму
   useEffect(() => {
     fetch(`/api/films/reviews/${filmId}`)
       .then((res) => res.json())
@@ -18,19 +22,46 @@ function ReviewSection({ filmId }) {
       .catch(console.error);
   }, [filmId]);
 
+  // Проверка: оставлял ли пользователь отзыв
+  useEffect(() => {
+    const checkUserReview = async () => {
+      if (!isAuthenticated || !token) {
+        setHasReviewed(false);
+        setCheckingReview(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/check/review/${filmId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Ошибка проверки отзыва');
+        const result = await response.json();
+        setHasReviewed(result === true);
+      } catch (err) {
+        console.error('Ошибка при проверке отзыва:', err);
+        setHasReviewed(false);
+      } finally {
+        setCheckingReview(false);
+      }
+    };
+
+    checkUserReview();
+  }, [filmId, isAuthenticated, token]);
+
+  // Отправка нового отзыва
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
 
     try {
       const response = await fetch('/api/newreview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           reviewText: text,
@@ -43,18 +74,28 @@ function ReviewSection({ filmId }) {
 
       setText('');
       setRating(3);
+      setHasReviewed(true); // Обновляем состояние
 
-      const updatedReviews = await fetch(`/api/films/reviews/${filmId}`).then(res => res.json());
+      const updatedReviews = await fetch(`/api/films/reviews/${filmId}`).then((res) => res.json());
       setReviews(updatedReviews);
     } catch (err) {
-      console.error(err);
+      console.error('Ошибка добавления отзыва:', err);
     }
   };
 
   return (
     <div className="mt-4">
       <h5>Оставить отзыв</h5>
-      {isAuthenticated ? (
+
+      {checkingReview ? (
+        <p>Проверка данных...</p>
+      ) : !isAuthenticated ? (
+        <p className="mb-4">
+          <a href="/login">Войдите</a>, чтобы оставить отзыв.
+        </p>
+      ) : hasReviewed ? (
+        <div className="alert alert-info">У вас уже есть отзыв к этому фильму.</div>
+      ) : (
         <Form onSubmit={handleSubmit} className="mb-4">
           <Form.Group className="mb-2">
             <Form.Label>Ваш отзыв</Form.Label>
@@ -79,17 +120,14 @@ function ReviewSection({ filmId }) {
           </Form.Group>
           <Button type="submit" variant="primary">Отправить</Button>
         </Form>
-      ) : (
-        <p className="mb-4">
-          <a href="/login">Войдите</a>, чтобы оставить отзыв.
-        </p>
       )}
 
       <h4>Отзывы:</h4>
-      {reviews.length === 0 && <p>Пока нет отзывов.</p>}
-      {reviews.map((review) => (
-        <ReviewCard key={review.id} review={review} />
-      ))}
+      {reviews.length === 0 ? (
+        <p>Пока нет отзывов.</p>
+      ) : (
+        reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+      )}
     </div>
   );
 }

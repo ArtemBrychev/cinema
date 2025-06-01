@@ -20,9 +20,9 @@ function NavigationBar() {
 
         <Nav className="me-auto">
           {isAuthenticated && user?.id && (
-            <Nav.Link as={Link} to={`/user_profile/${user.id}`}>Профиль</Nav.Link>  
+            <Nav.Link as={Link} to={`/user_profile/${user.id}`}>Профиль</Nav.Link>
           )}
-          <Nav.Link href="#categories">Избранное</Nav.Link>
+          <Nav.Link as={Link} to="/favourites/">Избранное</Nav.Link>
         </Nav>
 
         <Form className="d-flex me-2">

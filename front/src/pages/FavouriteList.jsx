@@ -10,7 +10,7 @@ import ProfileReviewCard from "../components/ProfileReviewCard";
 function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token, logout, user } = useAuth(); // Добавляем user из контекста
+  const { token, logout } = useAuth();
 
   const [userData, setUserData] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
@@ -24,6 +24,17 @@ function UserProfile() {
     status: ''
   });
 
+  // Заполняем форму данными пользователя
+  useEffect(() => {
+    if (userData) {
+      setEditForm({
+        name: userData.name || '',
+        status: userData.status || ''
+      });
+    }
+  }, [userData]);
+
+  // Загрузка данных профиля
   useEffect(() => {
     async function fetchProfile() {
       setLoading(true);
@@ -42,15 +53,12 @@ function UserProfile() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const data = response.data;
-        if (!data?.name) throw new Error("Профиль не найден");
+        if (!response.data?.name) {
+          throw new Error("Профиль не найден");
+        }
 
-        setUserData(data);
-        setIsOwner(data.email === user.email); // Проверяем владельца профиля
-        setEditForm({
-          name: data.name || '',
-          status: data.status || ''
-        });
+        setUserData(response.data);
+        setIsOwner(response.data.email === token.email); // Или другой способ проверки владельца
         fetchUserReviews(id);
       } catch (err) {
         console.error("Ошибка загрузки:", err);
@@ -79,7 +87,7 @@ function UserProfile() {
     }
 
     fetchProfile();
-  }, [id, token, logout, navigate, user.email]);
+  }, [id, token, logout, navigate]);
 
   const handleEditClick = () => setShowEditModal(true);
   const handleCloseModal = () => setShowEditModal(false);

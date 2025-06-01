@@ -1,5 +1,7 @@
 package com.cinema.project.services;
 
+import com.cinema.project.dto.PasswordChangeRequest;
+import com.cinema.project.dto.UserNameSettings;
 import com.cinema.project.dto.UserPrivateResponse;
 import com.cinema.project.dto.UserPublicResponse;
 
@@ -105,5 +107,50 @@ public class UserService{
         return userRepository.findByEmail(principal.getName());
     }
 
+
+    public ResponseEntity<?> deleteUser(Principal principal) {
+        try {
+            User targetUser = getUserFromPrincipal(principal);
+            if (targetUser == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден.");
+            }
+            userRepository.delete(targetUser);
+            return ResponseEntity.ok(true);
+    
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при удалении пользователя: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<?> changeUserBasicData(UserNameSettings newdata, User user){
+        user.setName(newdata.getName());
+        user.setStatus(newdata.getStatus());
+
+        userRepository.save(user);
+        return ResponseEntity.ok("Изменения сохранены");
+    }
+
+    public ResponseEntity<?> changePassword(PasswordChangeRequest passwordRequest, Principal principal) {
+        User curruser = getUserFromPrincipal(principal);
+        if (curruser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+        }
+    
+        if (!passwordEncoder.matches(passwordRequest.getOldPassword(), curruser.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Неверный старый пароль");
+        }
+    
+        if (passwordRequest.getNewPassword() == null || passwordRequest.getNewPassword().length() < 8) {
+            return ResponseEntity.badRequest().body("Новый пароль должен быть не менее 8 символов");
+        }
+    
+        String encodedPassword = passwordEncoder.encode(passwordRequest.getNewPassword());
+        curruser.setPassword(encodedPassword);
+        userRepository.save(curruser);
+    
+        return ResponseEntity.ok("Пароль успешно изменён");
+    }
     
 }

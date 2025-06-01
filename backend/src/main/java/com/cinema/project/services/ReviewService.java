@@ -10,10 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.cinema.project.repositories.FilmRepository;
 import com.cinema.project.repositories.ReviewRepository;
+import java.security.Principal;
 import java.time.LocalDate;
 
 @Service
@@ -68,5 +71,36 @@ public class ReviewService {
         return  result;
     }
 
+    public Boolean isReviewed(long id, Principal principal) {
+        User currentUser = userService.getUserFromPrincipal(principal);
+        List<Review> reviews = reviewRepository.findByUserId(currentUser.getId());
+        for (Review review : reviews) {
+            if (review.getFilm() != null && review.getFilm().getId() == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ResponseEntity<?> changeReview(UserReview userReview, Principal principal) {
+        if (userReview.getReviewText() == null || userReview.getReviewText().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Текст отзыва не может быть пустым");
+        }
+
+        Review review = reviewRepository.findById(userReview.getId())
+            .orElseThrow(() -> new RuntimeException("Отзыв не найден"));
+        
+        User currentUser = userService.getUserFromPrincipal(principal);
+        if (review.getUser().getId() != currentUser.getId()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Нельзя редактировать чужой отзыв");
+        }
+        
+        review.setReviewText(userReview.getReviewText());
+        review.setRating(userReview.getRating());
+        review.setReviewDate(LocalDate.now()); 
+        reviewRepository.save(review);
+
+        return ResponseEntity.ok("Отзыв успешно изменён");
+    }
     
 }

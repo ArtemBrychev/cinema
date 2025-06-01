@@ -2,6 +2,7 @@ package com.cinema.project.entities;
 
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -39,10 +40,10 @@ public class User {
     @Column(name="user_image")
     private String userImage;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Review> reviews;
 
-    @OneToMany(mappedBy= "user")
+    @OneToMany(mappedBy= "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Favourite> favourites;
 
     //Методы

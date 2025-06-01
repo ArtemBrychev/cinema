@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.project.dto.FavouriteResponse;
 import com.cinema.project.services.FavouriteService;
@@ -15,13 +16,14 @@ import java.security.Principal;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 
-@Controller
+@RestController
 public class FavouriteController {
     @Autowired
     FavouriteService favouriteService;
 
     @GetMapping("api/likes")
     public List<FavouriteResponse> favouriteList(Principal principal){
+        System.out.println("In likes");
         return favouriteService.getListOfFavourite(principal);
     }
 
