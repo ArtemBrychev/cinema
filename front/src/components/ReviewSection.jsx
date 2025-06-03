@@ -10,19 +10,34 @@ function ReviewSection({ filmId }) {
   const [rating, setRating] = useState(3);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [checkingReview, setCheckingReview] = useState(true);
-  
-  const { isAuthenticated, token } = useAuth();
+
+  const { isAuthenticated, token, user } = useAuth(); // ✅ добавили user
   const navigate = useNavigate();
 
-  // Загрузка всех отзывов к фильму
+  // ✅ Загрузка отзывов с учетом авторизации
   useEffect(() => {
-    fetch(`/api/films/reviews/${filmId}`)
-      .then((res) => res.json())
-      .then((data) => setReviews(data))
-      .catch(console.error);
-  }, [filmId]);
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`/api/films/reviews/${filmId}`, {
+          headers: isAuthenticated
+            ? { Authorization: `Bearer ${token}` }
+            : {}
+        });
 
-  // Проверка: оставлял ли пользователь отзыв
+        if (!response.ok) throw new Error('Ошибка загрузки отзывов');
+        const data = await response.json();
+
+
+        setReviews(data);
+      } catch (err) {
+        console.error('Ошибка при загрузке отзывов:', err);
+      }
+    };
+
+    fetchReviews();
+  }, [filmId, isAuthenticated, token]);
+
+  // ✅ Проверка: оставлял ли пользователь отзыв
   useEffect(() => {
     const checkUserReview = async () => {
       if (!isAuthenticated || !token) {
@@ -52,7 +67,7 @@ function ReviewSection({ filmId }) {
     checkUserReview();
   }, [filmId, isAuthenticated, token]);
 
-  // Отправка нового отзыва
+  // ✅ Отправка нового отзыва
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,10 +89,17 @@ function ReviewSection({ filmId }) {
 
       setText('');
       setRating(3);
-      setHasReviewed(true); // Обновляем состояние
+      setHasReviewed(true);
 
-      const updatedReviews = await fetch(`/api/films/reviews/${filmId}`).then((res) => res.json());
-      setReviews(updatedReviews);
+      // Перезагрузка отзывов
+      const updated = await fetch(`/api/films/reviews/${filmId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const updatedReviews = await updated.json();
+      const sorted = updatedReviews.sort((a, b) => new Date(b.reviewDate) - new Date(a.reviewDate));
+      setReviews(sorted);
     } catch (err) {
       console.error('Ошибка добавления отзыва:', err);
     }
@@ -126,7 +148,18 @@ function ReviewSection({ filmId }) {
       {reviews.length === 0 ? (
         <p>Пока нет отзывов.</p>
       ) : (
-        reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+        reviews.map((review) => (
+          <ReviewCard
+            key={review.id}
+            review={review}
+            isOwn={isAuthenticated && user?.id === review.userId}
+            onDelete={(id) => setReviews(reviews.filter(r => r.id !== id))}
+            onUpdate={(updatedReview) =>
+              setReviews(reviews.map(r => r.id === updatedReview.id ? updatedReview : r))
+            }
+          />
+
+        ))
       )}
     </div>
   );

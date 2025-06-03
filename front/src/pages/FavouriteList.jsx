@@ -1,235 +1,107 @@
-import React, { useEffect, useState } from "react";
-import { Row, Col, Image, Button, Spinner, Alert, Modal, Form } from "react-bootstrap";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import userImage from "../assets/user_placeholder.png";
-import { useAuth } from "../context/AuthContext";
-import "./UserProfile.css";
-import ProfileReviewCard from "../components/ProfileReviewCard";
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Spinner, Alert, Button } from 'react-bootstrap';
+import MovieCard from '../components/MovieCard';
+import { useAuth } from '../context/AuthContext';
 
-function UserProfile() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { token, logout } = useAuth();
-
-  const [userData, setUserData] = useState(null);
-  const [isOwner, setIsOwner] = useState(false);
+function FavouriteList() {
+  const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    status: ''
-  });
+  const [error, setError] = useState(null);
+  const { token } = useAuth();
 
-  // Заполняем форму данными пользователя
-  useEffect(() => {
-    if (userData) {
-      setEditForm({
-        name: userData.name || '',
-        status: userData.status || ''
-      });
-    }
-  }, [userData]);
-
-  // Загрузка данных профиля
-  useEffect(() => {
-    async function fetchProfile() {
-      setLoading(true);
-      setError("");
-      setUserData(null);
-      setIsOwner(false);
-
-      if (!token) {
-        setError("Требуется авторизация");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axios.get(`/api/profile/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.data?.name) {
-          throw new Error("Профиль не найден");
-        }
-
-        setUserData(response.data);
-        setIsOwner(response.data.email === token.email); // Или другой способ проверки владельца
-        fetchUserReviews(id);
-      } catch (err) {
-        console.error("Ошибка загрузки:", err);
-        setError(err.response?.data?.error || err.message);
-        if (err.response?.status === 401) {
-          logout();
-          navigate("/login");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function fetchUserReviews(userId) {
-      setReviewsLoading(true);
-      try {
-        const response = await axios.get(`/api/user/reviews/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setReviews(response.data);
-      } catch (err) {
-        console.error("Ошибка загрузки отзывов:", err);
-      } finally {
-        setReviewsLoading(false);
-      }
-    }
-
-    fetchProfile();
-  }, [id, token, logout, navigate]);
-
-  const handleEditClick = () => setShowEditModal(true);
-  const handleCloseModal = () => setShowEditModal(false);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveChanges = async () => {
+  const fetchFavourites = async () => {
     try {
-      const response = await axios.put('/api/change/usernamtus', editForm, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await fetch('/api/likes', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
-      if (response.status === 200) {
-        setUserData(prev => ({
-          ...prev,
-          name: editForm.name,
-          status: editForm.status
-        }));
-        handleCloseModal();
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке избранного');
       }
+
+      const data = await response.json();
+      setFavourites(data);
     } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      alert(err.response?.data?.error || 'Ошибка при сохранении');
+      console.error('Ошибка:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Вы уверены? Это действие нельзя отменить!")) return;
-    
+  const handleRemove = async (filmId) => {
     try {
-      await axios.delete("/api/delete/user", {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await fetch(`/api/delete/like/${filmId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
-      logout();
-      navigate("/");
+
+      if (!response.ok) {
+        throw new Error('Ошибка при удалении');
+      }
+
+      setFavourites(prev => prev.filter(fav => fav.filmId !== filmId));
     } catch (err) {
-      console.error("Ошибка удаления:", err);
-      alert("Не удалось удалить аккаунт");
+      console.error('Ошибка удаления:', err);
+      alert('Не удалось удалить фильм');
     }
   };
 
-  if (loading) return <Spinner animation="border" className="mt-4" />;
-  if (error) return <Alert variant="danger">{error}</Alert>;
-  if (!userData) return <Alert variant="warning">Профиль не найден</Alert>;
+  useEffect(() => {
+    if (token) {
+      fetchFavourites();
+    }
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="text-center mt-4">
+        <Spinner animation="border" />
+        <p>Загрузка избранных фильмов...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="danger" className="mt-3">
+        {error}
+        <Button 
+          variant="link" 
+          onClick={fetchFavourites}
+          className="p-0 ms-2"
+        >
+          Попробовать снова
+        </Button>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="p-3">
-      <h1 className="mb-4">Профиль пользователя</h1>
+    <div className="px-3">
+      <h2 className="my-3">Избранные фильмы</h2>
       
-      <div className="d-flex flex-column flex-md-row gap-4">
-        <div className="flex-shrink-0">
-          <Image src={userImage} roundedCircle width={200} height={200} />
-        </div>
-        
-        <div className="flex-grow-1">
-          <h2>{userData.name}</h2>
-          {isOwner && <p className="text-muted">{userData.email}</p>}
-          
-          <div className="mt-3 mb-4">
-            <h5>О себе:</h5>
-            <p>{userData.status || "Пока ничего не указано..."}</p>
-          </div>
-
-          {isOwner && (
-            <div className="d-flex gap-2 mb-4">
-              <Button variant="primary" onClick={handleEditClick}>
-                Редактировать профиль
-              </Button>
-              <Button variant="outline-secondary" onClick={handleLogout}>
-                Выйти
-              </Button>
-              <Button variant="outline-danger" onClick={handleDeleteAccount}>
-                Удалить аккаунт
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <h3>Отзывы</h3>
-        {reviewsLoading ? (
-          <Spinner animation="border" />
-        ) : reviews.length > 0 ? (
-          <Row className="g-3">
-            {reviews.map(review => (
-              <Col key={review.id} xs={12} md={6} lg={4}>
-                <ProfileReviewCard review={review} />
-              </Col>
-            ))}
-          </Row>
-        ) : (
-          <p className="text-muted">Пока нет отзывов</p>
-        )}
-      </div>
-
-      {/* Модальное окно редактирования */}
-      <Modal show={showEditModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Редактирование профиля</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Имя</Form.Label>
-              <Form.Control
-                name="name"
-                value={editForm.name}
-                onChange={handleInputChange}
+      {favourites.length === 0 ? (
+        <p className="text-muted">Список избранного пуст</p>
+      ) : (
+        <Row md={1} className="g-3">
+          {favourites.map((movie) => (
+            <Col key={movie.filmId}>
+              <MovieCard
+                movie={{ ...movie, id: movie.filmId }}
+                showRemoveButton={true}
+                onRemove={() => handleRemove(movie.filmId)}
               />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Статус</Form.Label>
-              <Form.Control
-                as="textarea"
-                name="status"
-                value={editForm.status}
-                onChange={handleInputChange}
-                rows={3}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Отмена
-          </Button>
-          <Button variant="primary" onClick={handleSaveChanges}>
-            Сохранить
-          </Button>
-        </Modal.Footer>
-      </Modal>
+            </Col>
+          ))}
+        </Row>
+      )}
     </div>
   );
 }
 
-export default UserProfile;
+export default FavouriteList;

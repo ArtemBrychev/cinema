@@ -7,6 +7,7 @@ import com.cinema.project.entities.Review;
 import com.cinema.project.entities.User;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,18 @@ public class ReviewService {
             result.add(new FilmReview(review));
         }
 
-        for(var x : result){
-            System.out.println("    " + x);
+        return result;
+    }
+
+    public List<FilmReview> getReviewListByFilmForUser(long filmId, Principal principal){
+        User curruser = userService.getUserFromPrincipal(principal);
+        List<Review> list =  reviewRepository.findByFilmId(filmId);
+        List<FilmReview> result = new ArrayList<>();
+        for(int i = 0; i < list.size(); i++){
+            result.add(new FilmReview(list.get(i)));
+            if(list.get(i).getUser().getId() == curruser.getId()){
+                Collections.swap(result, i, 0);
+            }
         }
 
         return result;
@@ -102,5 +113,22 @@ public class ReviewService {
 
         return ResponseEntity.ok("Отзыв успешно изменён");
     }
-    
+
+
+    public ResponseEntity<?> deleteReview(long reviewId, Principal principal){
+        User curruser = new User();
+        if(principal != null){
+            curruser = userService.getUserFromPrincipal(principal);
+        }else{
+            return ResponseEntity.badRequest().body("Ошибка, пользователь не аутентифицирован");
+        }
+
+        Review currReview = reviewRepository.findById(reviewId).get();
+        if(currReview.getUser().getId() == curruser.getId()){
+            reviewRepository.delete(currReview);
+            return ResponseEntity.ok("Отзыв успешно удален");
+        }else{
+            return ResponseEntity.badRequest().body("Невозможно чужой отзыв");
+        }
+    }
 }

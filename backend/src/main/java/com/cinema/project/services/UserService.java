@@ -43,18 +43,15 @@ public class UserService{
     }
 
     public void createNewUser(User user){
-        System.out.println("createNewUser in UserService");
         user.setRole(roleRepository.findById((long) 1));
         userRepository.save(user);
     }
 
     public void printListOfUsers(){
         List<User> users = userRepository.findAll();
-        System.out.println("----------");
         for(int i = 0; i < users.size(); i++){
             System.out.println(users.get(i));
         }
-        System.out.println("----------");
     }
 
     public User loadByUsername(String email){
@@ -71,7 +68,6 @@ public class UserService{
     }
 
     public boolean registerNewUser(UserRequest userRequest){
-        System.out.println("registerNewUser in UserService");
         User newuser = new User();
         String encodedpassword = passwordEncoder.encode(userRequest.getPassword());
         newuser.setEmail(userRequest.getEmail());

@@ -17,9 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,22 +41,37 @@ public class ReviewController {
     }
 
     @GetMapping("api/films/reviews/{id}")
-    public List<FilmReview> getFilmReviews(@PathVariable long id){
-        System.out.println("Review Controller");
-        return reviewService.getReviewListByFilm(id);
+    public List<FilmReview> getFilmReviews(@PathVariable long id, Principal principal){
+        if(principal == null){
+            return reviewService.getReviewListByFilm(id);
+        }else{
+            return reviewService.getReviewListByFilmForUser(id, principal);
+        }
     }
 
     @GetMapping("api/user/reviews/{id}")
     public List<UserReview> getUserReviews(@PathVariable long id){
-        System.out.println("User reviews");
         return reviewService.getReviewListByUser(id);
     }
 
     @GetMapping("api/check/review/{id}")
     public ResponseEntity<Boolean> isReviewed(@PathVariable long id, Principal principal){
         Boolean k = reviewService.isReviewed(id, principal);
-        System.out.println("check review for film: " + id + "and user: "
-             + userService.getUserFromPrincipal(principal) + " returned: " + k);
+        //System.out.println("check review for film: " + id + "and user: "
+        //     + userService.getUserFromPrincipal(principal) + " returned: " + k);
         return ResponseEntity.ok(k);
     }
+
+    @DeleteMapping("api/delete/review/{reviewId}")
+    public ResponseEntity<?> deleteReview(@PathVariable long reviewId, Principal principal){
+        return reviewService.deleteReview(reviewId, principal);
+    }
+
+    @PutMapping("api/change/review")
+    public ResponseEntity<?> changeReview(@RequestBody UserReview userReview, Principal principal){
+        return reviewService.changeReview(userReview, principal);
+    }
+
+
+    //ChangeReview method в сервисе уже есть
 }

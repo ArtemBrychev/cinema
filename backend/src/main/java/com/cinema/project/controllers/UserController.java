@@ -53,18 +53,14 @@ public class UserController {
     
     @GetMapping("api/profile/{id}")
     public ResponseEntity<?> getProfileInfo(@PathVariable long id, Principal principal){
-        System.out.println("Getting profile info on user");
         return userService.getUserProfileInfo(id, principal);
     }
 
     @PostMapping("api/login")
     public ResponseEntity<?> createAuthToken(@RequestBody UserRequest userRequest){
-        System.out.println("UserController.createAuthToken(api/login)");
         try{
             authManager.authenticate(new UsernamePasswordAuthenticationToken(userRequest.getEmail(), userRequest.getPassword()));
-            System.out.println("    Request from " + userRequest + " is ok");
         }catch(BadCredentialsException e){
-            System.out.println("    Request from " + userRequest + " is not ok");
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
@@ -79,12 +75,10 @@ public class UserController {
 
     @PostMapping("api/register")
     public ResponseEntity<?> registerNewUser(@RequestBody UserRequest userRequest){
-        System.out.println("Запрос получен, хоть что то");
         if(userService.checkEmail(userRequest.getEmail())){
             userService.registerNewUser(userRequest);
             return ResponseEntity.ok("Пользователь зарегистрирован");
         }else{
-            System.out.println("Проблема с email");
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "Пользователь с данным логином уже существует"));

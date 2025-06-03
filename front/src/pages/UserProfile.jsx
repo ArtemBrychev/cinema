@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Image, Button, Spinner, Alert, Modal, Form } from "react-bootstrap";
+import { Image, Button, Spinner, Alert, Modal, Form } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import userImage from "../assets/user_placeholder.png";
@@ -10,32 +10,42 @@ import ProfileReviewCard from "../components/ProfileReviewCard";
 function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token, logout, user } = useAuth(); // Добавляем user из контекста
+  const { token, logout, user } = useAuth();
 
+  // --- Основные состояния ---
   const [userData, setUserData] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  // --- Модальное окно редактирования профиля ---
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
-    status: ''
+    name: "",
+    status: "",
   });
+  const [savingProfile, setSavingProfile] = useState(false);
 
+  // --- Модальное окно смены пароля ---
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  // --- Загрузка профиля и отзывов ---
   useEffect(() => {
+    if (!token || !user) return;
+
     async function fetchProfile() {
       setLoading(true);
       setError("");
       setUserData(null);
       setIsOwner(false);
-
-      if (!token) {
-        setError("Требуется авторизация");
-        setLoading(false);
-        return;
-      }
 
       try {
         const response = await axios.get(`/api/profile/${id}`, {
@@ -46,14 +56,15 @@ function UserProfile() {
         if (!data?.name) throw new Error("Профиль не найден");
 
         setUserData(data);
-        setIsOwner(data.email === user.email); // Проверяем владельца профиля
+        setIsOwner(user?.email === data.email);
         setEditForm({
-          name: data.name || '',
-          status: data.status || ''
+          name: data.name || "",
+          status: data.status || "",
         });
+
         fetchUserReviews(id);
       } catch (err) {
-        console.error("Ошибка загрузки:", err);
+        console.error("Ошибка загрузки профиля:", err);
         setError(err.response?.data?.error || err.message);
         if (err.response?.status === 401) {
           logout();
@@ -79,36 +90,78 @@ function UserProfile() {
     }
 
     fetchProfile();
-  }, [id, token, logout, navigate, user.email]);
+  }, [id, token, logout, navigate, user]);
 
+  // --- Обработчики формы редактирования профиля ---
   const handleEditClick = () => setShowEditModal(true);
   const handleCloseModal = () => setShowEditModal(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditForm(prev => ({ ...prev, [name]: value }));
+    setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveChanges = async () => {
+    if (!editForm.name.trim()) {
+      alert("Имя не может быть пустым");
+      return;
+    }
+
+    setSavingProfile(true);
     try {
-      const response = await axios.put('/api/change/usernamtus', editForm, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await axios.put("/api/change/usernamtus", editForm, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.status === 200) {
-        setUserData(prev => ({
+        setUserData((prev) => ({
           ...prev,
           name: editForm.name,
-          status: editForm.status
+          status: editForm.status,
         }));
         handleCloseModal();
       }
     } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      alert(err.response?.data?.error || 'Ошибка при сохранении');
+      console.error("Ошибка сохранения:", err);
+      alert(err.response?.data?.error || "Ошибка при сохранении");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
+  // --- Обработчики смены пароля ---
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSavePassword = async () => {
+    if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+      alert("Пожалуйста, заполните оба поля пароля");
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      alert("Новый пароль должен содержать минимум 8 символов");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const response = await axios.put("/api/change/userpassword", passwordForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Пароль успешно изменён");
+      setShowPasswordModal(false);
+      setPasswordForm({ oldPassword: "", newPassword: "" });
+    } catch (err) {
+      console.error("Ошибка смены пароля:", err);
+      alert(err.response?.data?.error || "Ошибка при смене пароля");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  // --- Логика выхода и удаления аккаунта ---
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -116,19 +169,20 @@ function UserProfile() {
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("Вы уверены? Это действие нельзя отменить!")) return;
-    
+
     try {
       await axios.delete("/api/delete/user", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       logout();
       navigate("/");
     } catch (err) {
-      console.error("Ошибка удаления:", err);
+      console.error("Ошибка удаления аккаунта:", err);
       alert("Не удалось удалить аккаунт");
     }
   };
 
+  // --- UI при загрузке/ошибке ---
   if (loading) return <Spinner animation="border" className="mt-4" />;
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!userData) return <Alert variant="warning">Профиль не найден</Alert>;
@@ -136,25 +190,28 @@ function UserProfile() {
   return (
     <div className="p-3">
       <h1 className="mb-4">Профиль пользователя</h1>
-      
+
       <div className="d-flex flex-column flex-md-row gap-4">
         <div className="flex-shrink-0">
           <Image src={userImage} roundedCircle width={200} height={200} />
         </div>
-        
+
         <div className="flex-grow-1">
           <h2>{userData.name}</h2>
           {isOwner && <p className="text-muted">{userData.email}</p>}
-          
+
           <div className="mt-3 mb-4">
             <h5>О себе:</h5>
             <p>{userData.status || "Пока ничего не указано..."}</p>
           </div>
 
           {isOwner && (
-            <div className="d-flex gap-2 mb-4">
+            <div className="d-flex gap-2 mb-4 flex-wrap">
               <Button variant="primary" onClick={handleEditClick}>
                 Редактировать профиль
+              </Button>
+              <Button variant="warning" onClick={() => setShowPasswordModal(true)}>
+                Сменить пароль
               </Button>
               <Button variant="outline-secondary" onClick={handleLogout}>
                 Выйти
@@ -172,20 +229,18 @@ function UserProfile() {
         {reviewsLoading ? (
           <Spinner animation="border" />
         ) : reviews.length > 0 ? (
-          <Row className="g-3">
-            {reviews.map(review => (
-              <Col key={review.id} xs={12} md={6} lg={4}>
-                <ProfileReviewCard review={review} />
-              </Col>
+          <div className="d-flex flex-column gap-3">
+            {reviews.map((review) => (
+              <ProfileReviewCard key={review.id} review={review} />
             ))}
-          </Row>
+          </div>
         ) : (
           <p className="text-muted">Пока нет отзывов</p>
         )}
       </div>
 
-      {/* Модальное окно редактирования */}
-      <Modal show={showEditModal} onHide={handleCloseModal}>
+      {/* Модальное окно редактирования профиля */}
+      <Modal show={showEditModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Редактирование профиля</Modal.Title>
         </Modal.Header>
@@ -197,6 +252,7 @@ function UserProfile() {
                 name="name"
                 value={editForm.name}
                 onChange={handleInputChange}
+                disabled={savingProfile}
               />
             </Form.Group>
             <Form.Group>
@@ -207,16 +263,75 @@ function UserProfile() {
                 value={editForm.status}
                 onChange={handleInputChange}
                 rows={3}
+                disabled={savingProfile}
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+          <Button variant="secondary" onClick={handleCloseModal} disabled={savingProfile}>
             Отмена
           </Button>
-          <Button variant="primary" onClick={handleSaveChanges}>
-            Сохранить
+          <Button variant="primary" onClick={handleSaveChanges} disabled={savingProfile}>
+            {savingProfile ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Сохранение...
+              </>
+            ) : (
+              "Сохранить"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Модальное окно смены пароля */}
+      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Смена пароля</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Текущий пароль</Form.Label>
+              <Form.Control
+                type="password"
+                name="oldPassword"
+                value={passwordForm.oldPassword}
+                onChange={handlePasswordInputChange}
+                disabled={savingPassword}
+                autoComplete="current-password"
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Новый пароль</Form.Label>
+              <Form.Control
+                type="password"
+                name="newPassword"
+                value={passwordForm.newPassword}
+                onChange={handlePasswordInputChange}
+                disabled={savingPassword}
+                autoComplete="new-password"
+              />
+              <Form.Text className="text-muted">
+                Новый пароль должен содержать минимум 8 символов.
+              </Form.Text>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPasswordModal(false)} disabled={savingPassword}>
+            Отмена
+          </Button>
+          <Button variant="primary" onClick={handleSavePassword} disabled={savingPassword}>
+            {savingPassword ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Сохранение...
+              </>
+            ) : (
+              "Изменить пароль"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
