@@ -13,6 +13,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import com.cinema.project.repositories.FilmRepository;
 import com.cinema.project.services.FilmService;
+import com.cinema.project.services.SearchService;
 import com.cinema.project.services.UserService;
 
 import jakarta.servlet.Servlet;;
@@ -62,17 +63,9 @@ public class Main {
         System.out.println("Server is running at: http://" + host + ":" + port + contextPath + "/api");
 
         UserService userService = appContext.getBean(UserService.class);
-
         userService.printListOfUsers();
-        /*User newuser = new User();
-        newuser.setName("testUser");
-        newuser.setEmail("testUser@gmail.com");
-        newuser.setPassword("host");
+        
 
-        userService.createNewUser(newuser);
-
-        userService.printListOfUsers();*/
-    
         tomcatServer.getServer().await();
         System.out.println("Server is off");
         appContext.close();
