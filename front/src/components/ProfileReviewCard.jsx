@@ -13,12 +13,42 @@ const getStyleAndLabel = (rating) => {
 };
 
 const ProfileReviewCard = ({ review }) => {
-  const { filmId, filmName, reviewText, rating } = review;
+  const { filmId, filmName, reviewText, rating, cloudKey } = review;
   const { backgroundColor, color, label } = getStyleAndLabel(rating);
+  
+  // URL для загрузки обложки фильма
+  const coverUrl = cloudKey ? `/api/film/cover/${filmId}` : null;
 
   return (
-    <Card style={{ backgroundColor, color }} className="mb-3">
-      <Card.Body>
+    <Card style={{ backgroundColor, color, border: '0' }} className="mb-3 d-flex flex-row">
+      {/* Блок с обложкой фильма */}
+      {coverUrl && (
+        <div style={{ 
+          width: '150px',
+          minWidth: '150px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '10px',
+          overflow: 'hidden'
+        }}>
+          <img
+            src={coverUrl}
+            alt={`Обложка фильма ${filmName}`}
+            style={{ 
+              width: '100%',
+              height: 'auto',
+              maxHeight: '200px',
+              objectFit: 'cover',
+              borderRadius: '4px'
+            }}
+          />
+        </div>
+      )}
+
+      {/* Блок с содержимым отзыва */}
+      <Card.Body style={{ flex: '1 1 auto' }}>
         <Card.Title>
           <Link to={`/player/${filmId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
             {filmName}

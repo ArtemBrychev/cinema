@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,7 +27,11 @@ public class JwtUtils {
     @Autowired
     private UserRepository userRepository;
 
-    private final String secret = "srekbd19ouqmzmldxrvdsi3p09eqgmf1";
+    private String secret;
+
+    public JwtUtils(Dotenv dotenv){
+        secret  = dotenv.get("JWT_UTILS_SECRET");
+    }
 
     public String generateToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();

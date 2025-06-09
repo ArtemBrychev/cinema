@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from 'react-bootstrap/Card';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Image } from 'react-bootstrap';
 
 const getStyleAndLabel = (rating) => {
   if (rating >= 4) {
@@ -22,6 +22,32 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(reviewText);
   const [editedRating, setEditedRating] = useState(rating);
+  const [avatarSrc, setAvatarSrc] = useState(null);
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const response = await fetch(`/api/user/profilepic/${userId}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          setAvatarSrc(URL.createObjectURL(blob));
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки аватара:', err);
+      }
+    };
+
+    fetchAvatar();
+
+    return () => {
+      if (avatarSrc) {
+        URL.revokeObjectURL(avatarSrc);
+      }
+    };
+  }, [userId, token]);
 
   const handleDelete = async () => {
     if (!window.confirm('Вы уверены, что хотите удалить отзыв?')) return;
@@ -76,8 +102,43 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
   };
 
   return (
-    <Card style={{ backgroundColor, color }} className="mb-3">
-      <Card.Body>
+    <Card style={{ 
+      backgroundColor, 
+      color, 
+      border: '0',
+      marginTop: '0.5rem' // Уменьшаем отступ сверху
+    }} className="mb-3 d-flex flex-row">
+      {/* Блок с аватаром (теперь кликабельный) */}
+      <Link 
+        to={`/user_profile/${userId}`}
+        style={{
+          width: '80px',
+          minWidth: '80px',
+          display: 'flex',
+          alignItems: 'flex-start', // Выравниваем по верхнему краю
+          justifyContent: 'center',
+          padding: '10px 10px 10px 0', // Убираем левый padding
+          textDecoration: 'none'
+        }}
+      >
+        <Image 
+          src={avatarSrc || '/default-avatar.jpg'} 
+          roundedCircle 
+          style={{ 
+            width: '60px', 
+            height: '60px',
+            objectFit: 'cover',
+            marginTop: '0.2rem' // Слегка смещаем вниз для визуального баланса
+          }}
+          alt={`Аватар ${userName}`}
+        />
+      </Link>
+
+      {/* Блок с содержимым отзыва */}
+      <Card.Body style={{ 
+        flex: '1 1 auto',
+        paddingTop: '0.8rem' // Уменьшаем отступ сверху
+      }}>
         <Card.Subtitle className="mb-2">
           <strong>Оценка: {rating}</strong> — {label} от{' '}
           <Link to={`/user_profile/${userId}`} style={{ color: 'inherit', textDecoration: 'underline' }}>
@@ -106,26 +167,34 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
                 onChange={(e) => setEditedRating(Number(e.target.value))}
               />
             </Form.Group>
-            <Button size="sm" variant="success" onClick={handleUpdate} className="me-2">💾 Сохранить</Button>
-            <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>❌ Отмена</Button>
+            <Button size="sm" variant="success" onClick={handleUpdate} className="me-2">
+              💾 Сохранить
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>
+              ❌ Отмена
+            </Button>
           </>
         ) : (
           <>
-            <Card.Text>{reviewText}</Card.Text>
+            <Card.Text style={{ marginTop: '0.5rem' }}>{reviewText}</Card.Text>
             {isOwn && (
               <div className="mt-2">
-                <button className="btn btn-sm btn-warning me-2" onClick={() => setIsEditing(true)}>
+                <Button variant="warning" size="sm" onClick={() => setIsEditing(true)} className="me-2">
                   ✏️ Изменить
-                </button>
-                <button className="btn btn-sm btn-danger" onClick={handleDelete}>
+                </Button>
+                <Button variant="danger" size="sm" onClick={handleDelete}>
                   🗑️ Удалить
-                </button>
+                </Button>
               </div>
             )}
           </>
         )}
 
-        <Card.Footer style={{ color: 'rgba(0, 0, 0, 0.5)' }}>
+        <Card.Footer style={{ 
+          color: 'rgba(0, 0, 0, 0.5)',
+          padding: '0.5rem 0', // Уменьшаем отступы футера
+          marginTop: '0.5rem' // Поднимаем футер выше
+        }}>
           Дата отзыва: {reviewDate}
         </Card.Footer>
       </Card.Body>

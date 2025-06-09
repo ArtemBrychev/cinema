@@ -23,20 +23,17 @@ public class FavouriteController {
 
     @GetMapping("api/likes")
     public List<FavouriteResponse> favouriteList(Principal principal){
-        System.out.println("In likes");
         return favouriteService.getListOfFavourite(principal);
     }
 
     @PostMapping("api/newlike/{id}")
     public ResponseEntity<Object> createNewFavourite(@PathVariable long id, Principal principal){
-        System.out.println("FavController.createNewFavourite. FilmId: " + id + "in creareNewFav");
         return favouriteService.saveNewFavouriteFilm(id, principal);
     }
 
     @GetMapping("api/check/like/{id}")
     public ResponseEntity<Boolean> isFilmLiked(@PathVariable long id, Principal principal){
         boolean k = favouriteService.ifLiked(id, principal);
-        System.out.println("In isFilmLiked, responded with: " + k);
         return ResponseEntity.ok(favouriteService.ifLiked(id, principal));
     }
 

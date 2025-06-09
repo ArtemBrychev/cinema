@@ -44,6 +44,9 @@ public class Film {
     @Column(name="dislike_count")
     private long dislikeCount;
 
+    @Column(name="cloud_key")
+    private String cloudKey;
+
     @OneToMany(mappedBy = "film")
     private List<Review> reviews;
 
@@ -113,6 +116,14 @@ public class Film {
 
     public void setDislikeCount(long dislikeCount) {
         this.dislikeCount = dislikeCount;
+    }
+
+    public String getCloudKey(){
+        return cloudKey;
+    }
+
+    public void setCloudKey(String cloudKey){
+        this.cloudKey = cloudKey;
     }
 
     @Override

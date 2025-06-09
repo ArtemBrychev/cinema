@@ -4,10 +4,13 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -18,6 +21,8 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -54,10 +59,10 @@ public class AppConfig implements WebMvcConfigurer{
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/cinema");
-        dataSource.setUsername("MyAdmin");
-        dataSource.setPassword("1357908642");
+        dataSource.setDriverClassName(dotenv().get("DATA_SOURCE_CLASS_NAME"));
+        dataSource.setUrl(dotenv().get("DATA_SOURCE_URL"));
+        dataSource.setUsername(dotenv().get("DATA_SOURCE_USERNAME"));
+        dataSource.setPassword(dotenv().get("DATA_SOURCE_PASSWORD"));
         return dataSource;
     }
 
@@ -77,9 +82,16 @@ public class AppConfig implements WebMvcConfigurer{
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // чтобы был ISO формат, не числа
-
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         converters.add(new MappingJackson2HttpMessageConverter(mapper));
+        
+        ByteArrayHttpMessageConverter byteArrayConverter = new ByteArrayHttpMessageConverter();
+        byteArrayConverter.setSupportedMediaTypes(List.of(
+            MediaType.IMAGE_JPEG,
+            MediaType.IMAGE_PNG,
+            MediaType.APPLICATION_OCTET_STREAM
+        ));
+        converters.add(byteArrayConverter);
     }
 
     @Bean
@@ -87,5 +99,14 @@ public class AppConfig implements WebMvcConfigurer{
         JpaTransactionManager txManager = new JpaTransactionManager();
         txManager.setEntityManagerFactory(entityManagerFactory);
         return txManager;
+    }
+    @Bean
+    public MultipartResolver multipartResolver() {
+        return new StandardServletMultipartResolver();
+    }
+
+    @Bean
+    public Dotenv dotenv(){
+        return Dotenv.configure().ignoreIfMissing().load();
     }
 }

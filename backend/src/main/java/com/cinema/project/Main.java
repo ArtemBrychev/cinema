@@ -1,18 +1,22 @@
 package com.cinema.project;
 
 import com.cinema.project.entities.User;
+import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.servlet.MultipartConfigElement;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import com.cinema.project.repositories.FilmRepository;
 import com.cinema.project.services.FilmService;
+import com.cinema.project.services.S3Service;
 import com.cinema.project.services.SearchService;
 import com.cinema.project.services.UserService;
 
@@ -37,6 +41,9 @@ public class Main {
         tomcatServer.setPort(8080);
         Context ctx = tomcatServer.addContext("", null); //Контекст отдельный для сервлетов
         Wrapper servlet = Tomcat.addServlet(ctx, "", (Servlet) dispatcherServlet);
+
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        servlet.setMultipartConfigElement(new MultipartConfigElement(tmpDir));
 
         //Тут щас будет грязь с настройкой Spring Security
         FilterDef filterDef = new FilterDef();
@@ -64,7 +71,6 @@ public class Main {
 
         UserService userService = appContext.getBean(UserService.class);
         userService.printListOfUsers();
-        
 
         tomcatServer.getServer().await();
         System.out.println("Server is off");

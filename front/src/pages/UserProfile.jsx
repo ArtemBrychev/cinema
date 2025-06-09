@@ -12,24 +12,20 @@ function UserProfile() {
   const navigate = useNavigate();
   const { token, logout, user } = useAuth();
 
-  // --- Основные состояния ---
   const [userData, setUserData] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
-  // --- Модальное окно редактирования профиля ---
+  const [profileImageSrc, setProfileImageSrc] = useState(userImage);
+
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    status: "",
-  });
+  const [editForm, setEditForm] = useState({ name: "", status: "" });
+  const [selectedImage, setSelectedImage] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // --- Модальное окно смены пароля ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: "",
@@ -37,7 +33,6 @@ function UserProfile() {
   });
   const [savingPassword, setSavingPassword] = useState(false);
 
-  // --- Загрузка профиля и отзывов ---
   useEffect(() => {
     if (!token || !user) return;
 
@@ -62,6 +57,7 @@ function UserProfile() {
           status: data.status || "",
         });
 
+        fetchProfilePicture(data.id);
         fetchUserReviews(id);
       } catch (err) {
         console.error("Ошибка загрузки профиля:", err);
@@ -89,12 +85,28 @@ function UserProfile() {
       }
     }
 
+    async function fetchProfilePicture(userId) {
+      try {
+        const response = await axios.get(`/api/user/profilepic/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        });
+        const imageUrl = URL.createObjectURL(response.data);
+        setProfileImageSrc(imageUrl);
+      } catch (err) {
+        console.warn("Фотография профиля отсутствует или произошла ошибка:", err.response?.data || err.message);
+        setProfileImageSrc(userImage);
+      }
+    }
+
     fetchProfile();
   }, [id, token, logout, navigate, user]);
 
-  // --- Обработчики формы редактирования профиля ---
   const handleEditClick = () => setShowEditModal(true);
-  const handleCloseModal = () => setShowEditModal(false);
+  const handleCloseModal = () => {
+    setShowEditModal(false);
+    setSelectedImage(null);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -108,19 +120,36 @@ function UserProfile() {
     }
 
     setSavingProfile(true);
+
     try {
-      const response = await axios.put("/api/change/usernamtus", editForm, {
+      await axios.put("/api/change/usernamtus", editForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.status === 200) {
-        setUserData((prev) => ({
-          ...prev,
-          name: editForm.name,
-          status: editForm.status,
-        }));
-        handleCloseModal();
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage); // имя 'file' обязательно!
+      
+        await axios.post("/api/change/userpic", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      
+        const timestamp = Date.now();
+        setProfileImageSrc(`/api/user/profilepic/${userData.id}?t=${timestamp}`);
       }
+      
+
+      setUserData((prev) => ({
+        ...prev,
+        name: editForm.name,
+        status: editForm.status,
+      }));
+
+      setSelectedImage(null);
+      handleCloseModal();
     } catch (err) {
       console.error("Ошибка сохранения:", err);
       alert(err.response?.data?.error || "Ошибка при сохранении");
@@ -129,7 +158,6 @@ function UserProfile() {
     }
   };
 
-  // --- Обработчики смены пароля ---
   const handlePasswordInputChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
@@ -147,7 +175,7 @@ function UserProfile() {
 
     setSavingPassword(true);
     try {
-      const response = await axios.put("/api/change/userpassword", passwordForm, {
+      await axios.put("/api/change/userpassword", passwordForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Пароль успешно изменён");
@@ -161,7 +189,6 @@ function UserProfile() {
     }
   };
 
-  // --- Логика выхода и удаления аккаунта ---
   const handleLogout = () => {
     logout();
     navigate("/");
@@ -182,7 +209,6 @@ function UserProfile() {
     }
   };
 
-  // --- UI при загрузке/ошибке ---
   if (loading) return <Spinner animation="border" className="mt-4" />;
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!userData) return <Alert variant="warning">Профиль не найден</Alert>;
@@ -193,7 +219,7 @@ function UserProfile() {
 
       <div className="d-flex flex-column flex-md-row gap-4">
         <div className="flex-shrink-0">
-          <Image src={userImage} roundedCircle width={200} height={200} />
+          <Image src={profileImageSrc} roundedCircle width={200} height={200} />
         </div>
 
         <div className="flex-grow-1">
@@ -239,7 +265,7 @@ function UserProfile() {
         )}
       </div>
 
-      {/* Модальное окно редактирования профиля */}
+      {/* Модалка редактирования профиля */}
       <Modal show={showEditModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Редактирование профиля</Modal.Title>
@@ -255,7 +281,8 @@ function UserProfile() {
                 disabled={savingProfile}
               />
             </Form.Group>
-            <Form.Group>
+
+            <Form.Group className="mb-3">
               <Form.Label>Статус</Form.Label>
               <Form.Control
                 as="textarea"
@@ -266,6 +293,37 @@ function UserProfile() {
                 disabled={savingProfile}
               />
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Фото профиля (.jpg)</Form.Label>
+              <Form.Control
+                type="file"
+                accept=".jpg"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && file.type === "image/jpeg") {
+                    setSelectedImage(file);
+                  } else {
+                    alert("Пожалуйста, выберите файл .jpg формата");
+                    e.target.value = null;
+                  }
+                }}
+                disabled={savingProfile}
+              />
+            </Form.Group>
+
+            {selectedImage && (
+              <div className="text-center">
+                <p className="mb-1">Предпросмотр:</p>
+                <Image
+                  src={URL.createObjectURL(selectedImage)}
+                  roundedCircle
+                  width={120}
+                  height={120}
+                  alt="Предпросмотр"
+                />
+              </div>
+            )}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -285,7 +343,7 @@ function UserProfile() {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно смены пароля */}
+      {/* Модалка смены пароля */}
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Смена пароля</Modal.Title>

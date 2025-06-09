@@ -11,6 +11,7 @@ public class UserReview {
     private long filmId;
     private String reviewText;
     private int rating;
+    private String cloudKey;
 
     public UserReview() {}
 
@@ -20,6 +21,7 @@ public class UserReview {
         this.filmname = review.getFilm().getName();
         this.reviewText = review.getReviewText();
         this.rating = review.getRating();
+        this.cloudKey = review.getFilm().getCloudKey();
     }
 
     public long getId() {
@@ -60,5 +62,13 @@ public class UserReview {
 
     public void setRating(int rating) {
         this.rating = rating;
+    }
+
+    public String getCloudKey(){
+        return cloudKey;
+    }
+
+    public void setCloudKey(String cloudKey){
+        this.cloudKey = cloudKey;
     }
 }

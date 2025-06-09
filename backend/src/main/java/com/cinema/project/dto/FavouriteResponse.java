@@ -9,10 +9,12 @@ public class FavouriteResponse {
     private String name;
     private String director;
     private String description;
+    private String cloudKey;
 
     public FavouriteResponse(Favourite favourite) {
         this.id = favourite.getId();
         this.filmId = favourite.getFilm().getId();
+        this.cloudKey = favourite.getFilm().getCloudKey();
     }
 
     // Геттеры
@@ -36,7 +38,15 @@ public class FavouriteResponse {
         return description;
     }
 
+    public String getCloudKey(){
+        return cloudKey;
+    }
+
     // Сеттеры
+    public void setCloudKey(String cloudKey){
+        this.cloudKey = cloudKey;
+    }
+
     public void setId(long id) {
         this.id = id;
     }
