@@ -69,18 +69,4 @@ public class JwtUtils {
         return getAllClaims(token).get("roles", List.class);
     }
 
-    /*public Long getUserId(String token) {
-        return getAllClaims(token).get("id", Long.class);
-    }
-
-    public boolean isTokenExpired(String token) {
-        Date expiration = getAllClaims(token).getExpiration();
-        return expiration.before(new Date());
-    }
-
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = getUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-    }*/
-
 }
