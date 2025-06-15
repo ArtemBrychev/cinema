@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Image, Button, Spinner, Alert, Modal, Form } from "react-bootstrap";
+import { Image, Button, Spinner, Alert } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import userImage from "../assets/user_placeholder.png";
 import { useAuth } from "../context/AuthContext";
-import "./UserProfile.css";
 import ProfileReviewCard from "../components/ProfileReviewCard";
 
 function UserProfile() {
@@ -18,20 +17,7 @@ function UserProfile() {
   const [error, setError] = useState("");
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
-
   const [profileImageSrc, setProfileImageSrc] = useState(userImage);
-
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", status: "" });
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    oldPassword: "",
-    newPassword: "",
-  });
-  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     if (!token || !user) return;
@@ -52,10 +38,6 @@ function UserProfile() {
 
         setUserData(data);
         setIsOwner(user?.email === data.email);
-        setEditForm({
-          name: data.name || "",
-          status: data.status || "",
-        });
 
         fetchProfilePicture(data.id);
         fetchUserReviews(id);
@@ -94,100 +76,13 @@ function UserProfile() {
         const imageUrl = URL.createObjectURL(response.data);
         setProfileImageSrc(imageUrl);
       } catch (err) {
-        console.warn("Фотография профиля отсутствует или произошла ошибка:", err.response?.data || err.message);
+        console.warn("Фотография профиля отсутствует:", err.message);
         setProfileImageSrc(userImage);
       }
     }
 
     fetchProfile();
   }, [id, token, logout, navigate, user]);
-
-  const handleEditClick = () => setShowEditModal(true);
-  const handleCloseModal = () => {
-    setShowEditModal(false);
-    setSelectedImage(null);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSaveChanges = async () => {
-    if (!editForm.name.trim()) {
-      alert("Имя не может быть пустым");
-      return;
-    }
-
-    setSavingProfile(true);
-
-    try {
-      await axios.put("/api/change/usernamtus", editForm, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (selectedImage) {
-        const formData = new FormData();
-        formData.append("file", selectedImage); // имя 'file' обязательно!
-      
-        await axios.post("/api/change/userpic", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      
-        const timestamp = Date.now();
-        setProfileImageSrc(`/api/user/profilepic/${userData.id}?t=${timestamp}`);
-      }
-      
-
-      setUserData((prev) => ({
-        ...prev,
-        name: editForm.name,
-        status: editForm.status,
-      }));
-
-      setSelectedImage(null);
-      handleCloseModal();
-    } catch (err) {
-      console.error("Ошибка сохранения:", err);
-      alert(err.response?.data?.error || "Ошибка при сохранении");
-    } finally {
-      setSavingProfile(false);
-    }
-  };
-
-  const handlePasswordInputChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSavePassword = async () => {
-    if (!passwordForm.oldPassword || !passwordForm.newPassword) {
-      alert("Пожалуйста, заполните оба поля пароля");
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      alert("Новый пароль должен содержать минимум 8 символов");
-      return;
-    }
-
-    setSavingPassword(true);
-    try {
-      await axios.put("/api/change/userpassword", passwordForm, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      alert("Пароль успешно изменён");
-      setShowPasswordModal(false);
-      setPasswordForm({ oldPassword: "", newPassword: "" });
-    } catch (err) {
-      console.error("Ошибка смены пароля:", err);
-      alert(err.response?.data?.error || "Ошибка при смене пароля");
-    } finally {
-      setSavingPassword(false);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -233,11 +128,8 @@ function UserProfile() {
 
           {isOwner && (
             <div className="d-flex gap-2 mb-4 flex-wrap">
-              <Button variant="primary" onClick={handleEditClick}>
+              <Button variant="primary" onClick={() => navigate("/editProfile/")}>
                 Редактировать профиль
-              </Button>
-              <Button variant="warning" onClick={() => setShowPasswordModal(true)}>
-                Сменить пароль
               </Button>
               <Button variant="outline-secondary" onClick={handleLogout}>
                 Выйти
@@ -264,135 +156,6 @@ function UserProfile() {
           <p className="text-muted">Пока нет отзывов</p>
         )}
       </div>
-
-      {/* Модалка редактирования профиля */}
-      <Modal show={showEditModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Редактирование профиля</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Имя</Form.Label>
-              <Form.Control
-                name="name"
-                value={editForm.name}
-                onChange={handleInputChange}
-                disabled={savingProfile}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Статус</Form.Label>
-              <Form.Control
-                as="textarea"
-                name="status"
-                value={editForm.status}
-                onChange={handleInputChange}
-                rows={3}
-                disabled={savingProfile}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Фото профиля (.jpg)</Form.Label>
-              <Form.Control
-                type="file"
-                accept=".jpg"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file && file.type === "image/jpeg") {
-                    setSelectedImage(file);
-                  } else {
-                    alert("Пожалуйста, выберите файл .jpg формата");
-                    e.target.value = null;
-                  }
-                }}
-                disabled={savingProfile}
-              />
-            </Form.Group>
-
-            {selectedImage && (
-              <div className="text-center">
-                <p className="mb-1">Предпросмотр:</p>
-                <Image
-                  src={URL.createObjectURL(selectedImage)}
-                  roundedCircle
-                  width={120}
-                  height={120}
-                  alt="Предпросмотр"
-                />
-              </div>
-            )}
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal} disabled={savingProfile}>
-            Отмена
-          </Button>
-          <Button variant="primary" onClick={handleSaveChanges} disabled={savingProfile}>
-            {savingProfile ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Сохранение...
-              </>
-            ) : (
-              "Сохранить"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Модалка смены пароля */}
-      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Смена пароля</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Текущий пароль</Form.Label>
-              <Form.Control
-                type="password"
-                name="oldPassword"
-                value={passwordForm.oldPassword}
-                onChange={handlePasswordInputChange}
-                disabled={savingPassword}
-                autoComplete="current-password"
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Новый пароль</Form.Label>
-              <Form.Control
-                type="password"
-                name="newPassword"
-                value={passwordForm.newPassword}
-                onChange={handlePasswordInputChange}
-                disabled={savingPassword}
-                autoComplete="new-password"
-              />
-              <Form.Text className="text-muted">
-                Новый пароль должен содержать минимум 8 символов.
-              </Form.Text>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowPasswordModal(false)} disabled={savingPassword}>
-            Отмена
-          </Button>
-          <Button variant="primary" onClick={handleSavePassword} disabled={savingPassword}>
-            {savingPassword ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Сохранение...
-              </>
-            ) : (
-              "Изменить пароль"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 }

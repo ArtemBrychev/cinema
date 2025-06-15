@@ -55,6 +55,7 @@ function NavigationBar() {
               Зарегистрироваться
             </Button>
           </>
+          
         ) : (
           <Button variant="outline-warning" onClick={logout}>
             Выйти

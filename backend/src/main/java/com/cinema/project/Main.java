@@ -69,8 +69,6 @@ public class Main {
         String contextPath = ctx.getPath();
         System.out.println("Server is running at: http://" + host + ":" + port + contextPath + "/api");
 
-        UserService userService = appContext.getBean(UserService.class);
-        userService.printListOfUsers();
 
         tomcatServer.getServer().await();
         System.out.println("Server is off");

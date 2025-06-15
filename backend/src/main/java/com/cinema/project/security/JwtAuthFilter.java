@@ -57,8 +57,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(token); // 🔥 ВАЖНО
             }
-        } else {
-            System.out.println("Invalid header");
         }
     
         filterChain.doFilter(request, response);

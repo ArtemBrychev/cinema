@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Row, Col } from "react-bootstrap";
 import MovieCard from '../components/MovieCard';
 import CategoryFilter from '../components/CategoryFilter'; // ⬅️ Добавили фильтр
+import MovieCarousel from "../components/MovieCarousel";
+
 
 function List() {
   const [movies, setMovies] = useState([]);  // Состояние для фильмов
@@ -33,7 +35,8 @@ function List() {
   }, [categoryId]); // Если categoryId изменяется, повторно запрашиваем данные
 
   return (
-    <div>
+    <div className='mt-4'>
+      <MovieCarousel />
       <div className="d-flex gap-3 my-2 align-items-center">
         <h1>Список фильмов</h1>
         

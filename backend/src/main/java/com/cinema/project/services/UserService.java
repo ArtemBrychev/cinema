@@ -69,6 +69,7 @@ public class UserService{
 
     public boolean registerNewUser(UserRequest userRequest){
         User newuser = new User();
+        if(userRequest.getPassword().length() < 8) return false;
         String encodedpassword = passwordEncoder.encode(userRequest.getPassword());
         newuser.setEmail(userRequest.getEmail());
         newuser.setName(userRequest.getName());
@@ -138,8 +139,9 @@ public class UserService{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Неверный старый пароль");
         }
     
-        if (passwordRequest.getNewPassword() == null || passwordRequest.getNewPassword().length() < 8) {
-            return ResponseEntity.badRequest().body("Новый пароль должен быть не менее 8 символов");
+        if (passwordRequest.getNewPassword() == null || passwordRequest.getNewPassword().length() < 8
+            || passwordRequest.getNewPassword().length()>40) {
+            return ResponseEntity.badRequest().body("Пароль должен быть от 8 до 40 символов");
         }
     
         String encodedPassword = passwordEncoder.encode(passwordRequest.getNewPassword());

@@ -34,7 +34,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(name="profile_status")
+    @Column(name="profile_status", length = 1500)
     private String status;
 
     @Column(name="user_image")

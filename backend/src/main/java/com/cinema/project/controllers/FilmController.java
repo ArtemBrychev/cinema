@@ -2,6 +2,7 @@ package com.cinema.project.controllers;
 
 import java.util.List;
 
+import com.cinema.project.services.SelectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +17,13 @@ import com.cinema.project.services.FilmService;
 public class FilmController {
     
     private final FilmService filmService;
+    private final SelectionService selectionService;
 
     @Autowired
-    public FilmController(FilmService filmService){
+    public FilmController(FilmService filmService, SelectionService selectionService){
         this.filmService = filmService;
+        this.selectionService = selectionService;
+
     }
     
     @GetMapping("api/films")
@@ -35,4 +39,10 @@ public class FilmController {
     public Film getFilmInfo(@PathVariable long id){
         return filmService.getFilmInfo(id);
     }
+
+    @GetMapping("api/films/selection")
+    public List<Film> getSelection(){
+        return selectionService.getRandomSelection().subList(0, 3);
+    }
+
 }

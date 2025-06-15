@@ -13,8 +13,11 @@ function RegisterForm() {
     password: '',
     confirmPassword: ''
   });
+
   const [error, setError] = useState('');
   const [passwordMatch, setPasswordMatch] = useState(true);
+  const [passwordLengthValid, setPasswordLengthValid] = useState(true);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -22,10 +25,12 @@ function RegisterForm() {
     if (formData.confirmPassword) {
       setPasswordMatch(formData.password === formData.confirmPassword);
     }
+    setPasswordLengthValid(formData.password.length >= 8);
   }, [formData.password, formData.confirmPassword]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -33,6 +38,11 @@ function RegisterForm() {
 
     if (!passwordMatch) {
       setError('Пароли не совпадают');
+      return;
+    }
+
+    if (!passwordLengthValid) {
+      setError('Пароль должен быть не менее 8 символов');
       return;
     }
 
@@ -48,12 +58,22 @@ function RegisterForm() {
         password: formData.password
       });
 
-      const token = loginResponse.data.token;
-      login(token);
+      login(loginResponse.data.token);
       navigate('/');
     } catch (err) {
-      console.error(err);
-      setError('Ошибка регистрации');
+      if (err.response && err.response.data) {
+        const serverError = err.response.data;
+
+        if (typeof serverError === 'string') {
+          setError(serverError);
+        } else if (serverError.error) {
+          setError(serverError.error);
+        } else {
+          setError('Ошибка регистрации');
+        }
+      } else {
+        setError('Ошибка соединения с сервером');
+      }
     }
   };
 
@@ -92,8 +112,12 @@ function RegisterForm() {
           value={formData.password}
           onChange={handleChange}
           placeholder="Пароль"
+          isInvalid={!passwordLengthValid}
           required
         />
+        <Form.Control.Feedback type="invalid">
+          Пароль должен быть не менее 8 символов
+        </Form.Control.Feedback>
       </FloatingLabel>
 
       <FloatingLabel controlId="floatingConfirmPassword" label="Подтвердите пароль" className="mb-3">
@@ -115,7 +139,7 @@ function RegisterForm() {
         Зарегистрироваться
       </Button>
     </Form>
-  );
+  ); 
 }
 
 export default RegisterForm;

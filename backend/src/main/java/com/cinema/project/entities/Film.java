@@ -21,16 +21,15 @@ public class Film {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name="name", nullable=false, length=100)
+    @Column(name="name", nullable=false)
     private String name;
     
-    @Column(name="director", nullable=false, length=50)
+    @Column(name="director", nullable=false)
     private String director;
 
-    @Column(name="description", nullable=false, length=700)
+    @Column(name="description", nullable=false, length=2000)
     private String description;
 
-    
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
@@ -38,11 +37,8 @@ public class Film {
     @Column(name="rutube_link", nullable=false)
     private String rutubeLink;
 
-    @Column(name="like_count")
-    private long likeCount;
-
-    @Column(name="dislike_count")
-    private long dislikeCount;
+    @Column(name="view_count")
+    private long viewCount;
 
     @Column(name="cloud_key")
     private String cloudKey;
@@ -102,20 +98,12 @@ public class Film {
         this.rutubeLink = rutubeLink;
     }
 
-    public long getLikeCount() {
-        return likeCount;
+    public long getViewCount() {
+        return viewCount;
     }
 
-    public void setLikeCount(long likeCount) {
-        this.likeCount = likeCount;
-    }
-
-    public long getDislikeCount() {
-        return dislikeCount;
-    }
-
-    public void setDislikeCount(long dislikeCount) {
-        this.dislikeCount = dislikeCount;
+    public void setViewCount(long viewCount) {
+        this.viewCount = viewCount;
     }
 
     public String getCloudKey(){

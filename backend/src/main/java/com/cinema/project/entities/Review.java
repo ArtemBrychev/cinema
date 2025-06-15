@@ -26,7 +26,7 @@ public class Review {
     @JoinColumn(name="film_id")
     private Film film;
 
-    @Column(name="review_text", nullable=false)
+    @Column(name="review_text", nullable=false, length = 2000)
     private String reviewText;
 
     @Column(name="film_rating", nullable=false)

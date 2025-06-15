@@ -20,6 +20,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -86,7 +87,6 @@ public class S3Service {
 
     public ResponseEntity<?> getProfilePicture(long userId) throws IOException{
         User user = userService.findUser(userId);
-        System.out.println("------------------- " + user.getUserImage());
         String key = user.getUserImage();
 
         if(key == null){
@@ -95,6 +95,20 @@ public class S3Service {
 
 
         return getFileFromS3(key, "image/jpeg");
+    }
+
+    public ResponseEntity<?> deleteProfilePic(Principal principal){
+        User curruser = userService.getUserFromPrincipal(principal);
+        if(curruser.getUserImage() == null){
+            return ResponseEntity.badRequest().body("Нет фото профиля");
+        }
+
+        String key = curruser.getUserImage();
+        curruser.setUserImage(null);
+        userRepository.save(curruser);
+
+        deleteFromS3(key);
+        return ResponseEntity.ok("Фото профиля успешно удалено");
     }
 
     private ResponseEntity<byte[]> getFileFromS3(String key, String fallbackContentType) throws IOException {
@@ -133,5 +147,14 @@ public class S3Service {
         ));
 
         return ResponseEntity.ok("File uploaded successfully");
+    }
+
+    private void deleteFromS3(String key){
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(BUCKET_NAME)
+                .key(key)
+                .build();
+
+        s3Client.deleteObject(request);
     }
 }

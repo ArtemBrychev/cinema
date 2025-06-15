@@ -43,4 +43,9 @@ public class ImageController {
             return ResponseEntity.badRequest().body("Ошибка с получением фото пользователя, либо ее отсутсвие");
         }
     }
+
+    @DeleteMapping("api/delete/profliepic")
+    public ResponseEntity<?> deleteProfilePic(Principal principal){
+        return s3Service.deleteProfilePic(principal);
+    }
 }

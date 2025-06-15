@@ -58,7 +58,30 @@ public class SecurityConfig{
             http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/profile/**", "/api/reviews/**", "/api/newreview").authenticated()
+                    .requestMatchers(
+                            // Профиль пользователя
+                            "/api/profile/**",
+
+                            // Управление избранным
+                            "/api/likes",
+                            "/api/newlike/**",
+                            "/api/check/like/**",
+                            "/api/delete/like/**",
+
+                            // Управление отзывами
+                            "/api/newreview",
+                            "/api/check/review/**",
+                            "/api/delete/review/**",
+                            "/api/change/review",
+
+                            // Управление пользователем
+                            "/api/delete/user",
+                            "/api/change/usernamtus",
+                            "/api/change/userpassword",
+
+                            // Управление аватаром
+                            "/api/change/userpic",
+                            "/api/delete/profliepic").authenticated()
                     .requestMatchers("/", "/**").permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

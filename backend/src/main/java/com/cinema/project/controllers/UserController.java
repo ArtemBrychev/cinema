@@ -5,12 +5,9 @@ import com.cinema.project.dto.TokenResponse;
 import com.cinema.project.dto.UserNameSettings;
 import com.cinema.project.dto.UserRequest;
 import com.cinema.project.entities.User;
-import com.cinema.project.repositories.UserRepository;
 import com.cinema.project.security.JwtUtils;
-import com.cinema.project.security.UserDetailsWrapper;
 import com.cinema.project.services.UserService;
 
-import jakarta.security.auth.message.callback.PrivateKeyCallback;
 
 import java.security.Principal;
 import java.util.Map;
@@ -18,7 +15,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,8 +26,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -75,9 +69,15 @@ public class UserController {
 
     @PostMapping("api/register")
     public ResponseEntity<?> registerNewUser(@RequestBody UserRequest userRequest){
+        if((userRequest.getName().length()>255)||(userRequest.getEmail().length()>255)||(userRequest.getPassword().length()>255)){
+            return ResponseEntity.badRequest().body("Слишком длинный текст в одном из полей");
+        }
         if(userService.checkEmail(userRequest.getEmail())){
-            userService.registerNewUser(userRequest);
-            return ResponseEntity.ok("Пользователь зарегистрирован");
+            if (userService.registerNewUser(userRequest)) {
+                return ResponseEntity.ok("Пользователь зарегистрирован");
+            }else{
+                return ResponseEntity.badRequest().body("Пароль не должен быть короче 8 символов");
+            }
         }else{
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -95,6 +95,9 @@ public class UserController {
     public ResponseEntity<?> setNameAndStatus(@RequestBody UserNameSettings newdata, Principal principal){
         User curruser = userService.getUserFromPrincipal(principal);
         if(curruser!=null){
+            if((newdata.getName().length()>255)||(newdata.getStatus().length()>1500)){
+                return ResponseEntity.badRequest().body("Превышена длина одного из полей");
+            }
             if(newdata.getName()!=null){
                 return userService.changeUserBasicData(newdata, curruser);
             }else{

@@ -61,7 +61,6 @@ public class JwtUtils {
     }
 
     public String getUsername(String token){
-        System.out.println("In getUsername. Username: " + getAllClaims(token).getSubject());
         return getAllClaims(token).getSubject();
     }
 

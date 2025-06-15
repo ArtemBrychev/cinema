@@ -17,7 +17,7 @@ public class SearchService {
     private FilmService filmService;
 
     public List<Film> search(String searchRequest){
-        String[] dataWords = prepareData(searchRequest);
+        String[] dataWords = prapareString(searchRequest).split(" ");
         List<Film> filmArr = filmService.getFilmList();
         HashMap<Film, Double> filmRates= new HashMap<>();
         for(int i = 0; i < filmArr.size(); i++){
@@ -35,37 +35,22 @@ public class SearchService {
         return sortedFilms;
     }
 
-
-    private String[] prepareData(String data){
-        String result = data.replaceAll("[^a-zA-Zа-яА-ЯёЁ0-9\\s]", "");
-        result = result.replaceAll("\\s+", " ").trim()
-            .replace("ё", "е")
-            .replace("э", "е")
-            .replace("ъ", "ь");
-
-        return result.split(" ");
+    private String prapareString(String original){
+        return original.replaceAll("[^a-zA-Zа-яА-ЯёЁ0-9\\s]", "")
+                .replaceAll("\\s+", " ")
+                .trim()
+                .toLowerCase()
+                .replace("ё", "е")
+                .replace("э", "е")
+                .replace("ъ", "ь");
     }
 
     private Double calculateRate(Film film, String[] keywords) {
         if (keywords.length == 0) return 0.0;
     
-        String filmName = film.getName()
-            .replaceAll("[^a-zA-Zа-яА-ЯёЁ0-9\\s]", "")
-            .replaceAll("\\s+", " ")
-            .trim()
-            .toLowerCase()
-            .replace("ё", "е")
-            .replace("э", "е")
-            .replace("ъ", "ь");
+        String filmName = prapareString(film.getName());
     
-        String filmDescription = film.getDescription()
-            .replaceAll("[^a-zA-Zа-яА-ЯёЁ0-9\\s]", "")
-            .replaceAll("\\s+", " ")
-            .trim()
-            .toLowerCase()
-            .replace("ё", "е")
-            .replace("э", "е")
-            .replace("ъ", "ь");
+        String filmDescription = prapareString(film.getDescription());
     
         int totalNamePoints = 0, totalDescPoints = 0;
     
@@ -73,9 +58,13 @@ public class SearchService {
             String lowerKeyword = keyword.toLowerCase();
             if (filmName.contains(lowerKeyword)) {
                 totalNamePoints += 5;
+            }else if(filmName.contains(enToRu(lowerKeyword))){
+                totalNamePoints += 5;
             }
             
             if (filmDescription.contains(lowerKeyword)) {
+                totalDescPoints += 1;
+            }else if(filmDescription.contains(enToRu(lowerKeyword))){
                 totalDescPoints += 1;
             }
         }
@@ -85,5 +74,47 @@ public class SearchService {
         double actualScore = totalNamePoints + totalDescPoints;
         
         return actualScore / maxPossibleScore;
+    }
+
+    private String enToRu(String original) {
+        Map<Character, Character> enToRuMap = new HashMap<>();
+        enToRuMap.put('q', 'й');
+        enToRuMap.put('w', 'ц');
+        enToRuMap.put('e', 'у');
+        enToRuMap.put('r', 'к');
+        enToRuMap.put('t', 'е');
+        enToRuMap.put('y', 'н');
+        enToRuMap.put('u', 'г');
+        enToRuMap.put('i', 'ш');
+        enToRuMap.put('o', 'щ');
+        enToRuMap.put('p', 'з');
+        enToRuMap.put('[', 'х');
+        enToRuMap.put(']', 'ъ');
+        enToRuMap.put('a', 'ф');
+        enToRuMap.put('s', 'ы');
+        enToRuMap.put('d', 'в');
+        enToRuMap.put('f', 'а');
+        enToRuMap.put('g', 'п');
+        enToRuMap.put('h', 'р');
+        enToRuMap.put('j', 'о');
+        enToRuMap.put('k', 'л');
+        enToRuMap.put('l', 'д');
+        enToRuMap.put(';', 'ж');
+        enToRuMap.put('\'', 'э');
+        enToRuMap.put('z', 'я');
+        enToRuMap.put('x', 'ч');
+        enToRuMap.put('c', 'с');
+        enToRuMap.put('v', 'м');
+        enToRuMap.put('b', 'и');
+        enToRuMap.put('n', 'т');
+        enToRuMap.put('m', 'ь');
+        enToRuMap.put(',', 'б');
+        enToRuMap.put('.', 'ю');
+
+        StringBuilder result = new StringBuilder();
+        for (char c : original.toCharArray()) {
+            result.append(enToRuMap.getOrDefault(c, c));
+        }
+        return result.toString();
     }
 }

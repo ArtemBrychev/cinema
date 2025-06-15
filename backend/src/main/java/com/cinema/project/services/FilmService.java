@@ -1,5 +1,6 @@
 package com.cinema.project.services;
 
+import com.cinema.project.dto.FilmReview;
 import com.cinema.project.entities.Category;
 import com.cinema.project.entities.Film;
 import com.cinema.project.repositories.CategoryRepository;
@@ -15,11 +16,13 @@ public class FilmService {
 
     private final FilmRepository filmRepository;
     private final CategoryRepository categoryRepository;
+    private final ReviewService reviewService;
 
     @Autowired
-    public FilmService(FilmRepository filmRepository, CategoryRepository categoryRepository){
+    public FilmService(FilmRepository filmRepository, CategoryRepository categoryRepository, ReviewService reviewService){
         this.filmRepository = filmRepository;
         this.categoryRepository = categoryRepository;
+        this.reviewService = reviewService;
     }
 
     public List<Film> getFilmListByCategory(long categoryId){
@@ -37,9 +40,23 @@ public class FilmService {
     public Film getFilmInfo(long id){
         Optional<Film> opt =  filmRepository.findById(id);
         if(opt.isPresent()){
-            return opt.get();
+            Film film = opt.get();
+            film.setViewCount(film.getViewCount()+1);
+            filmRepository.save(film);
+            return film;
         }else{
             throw new IllegalArgumentException("Не найден фильм с данным id");
         }
+    }
+
+    public Double calculateReviewRating(Film film){
+        List<FilmReview> filmReviews = reviewService.getReviewListByFilm(film.getId());
+        if (filmReviews.isEmpty()) return 0.0;
+        long summ = 0;
+        for(var review : filmReviews){
+            summ+=review.getRating();
+        }
+
+        return (double) summ/filmReviews.size();
     }
 }

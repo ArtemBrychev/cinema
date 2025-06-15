@@ -3,6 +3,7 @@ package com.cinema.project.controllers;
 import com.cinema.project.dto.FilmReview;
 import com.cinema.project.dto.UserRequest;
 import com.cinema.project.dto.UserReview;
+import com.cinema.project.entities.Film;
 import com.cinema.project.entities.Review;
 import com.cinema.project.services.FilmService;
 import com.cinema.project.services.ReviewService;
@@ -35,9 +36,13 @@ public class ReviewController {
     
     
     @PostMapping("api/newreview")
-    public void newReviewCreation(@RequestBody UserReview userReview, Principal principal){
+    public ResponseEntity<?> newReviewCreation(@RequestBody UserReview userReview, Principal principal){
         long id = userService.getUserFromPrincipal(principal).getId();
+        if(userReview.getReviewText().length() > 2000){
+            return ResponseEntity.badRequest().body("Текст слишком длинный");
+        }
         reviewService.saveNewReview(userReview, id);
+        return ResponseEntity.ok("Отзыв сохранен");
     }
 
     @GetMapping("api/films/reviews/{id}")
@@ -69,9 +74,10 @@ public class ReviewController {
 
     @PutMapping("api/change/review")
     public ResponseEntity<?> changeReview(@RequestBody UserReview userReview, Principal principal){
+        if(userReview.getReviewText().length()>2000){
+            return ResponseEntity.badRequest().body("Текст слишком длинный");
+        }
         return reviewService.changeReview(userReview, principal);
     }
 
-
-    //ChangeReview method в сервисе уже есть
 }
