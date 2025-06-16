@@ -17,6 +17,12 @@ public class SearchService {
     private FilmService filmService;
 
     public List<Film> search(String searchRequest){
+
+        //If something broke, blame this little shit
+        if(prapareString(searchRequest).isEmpty()){
+            return List.of();
+        }
+
         String[] dataWords = prapareString(searchRequest).split(" ");
         List<Film> filmArr = filmService.getFilmList();
         HashMap<Film, Double> filmRates= new HashMap<>();

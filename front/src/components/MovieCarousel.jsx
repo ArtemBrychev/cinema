@@ -1,5 +1,7 @@
 import Carousel from "react-bootstrap/Carousel";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import "./MovieCarousel.css";
 
 function MovieCarousel() {
   const [films, setFilms] = useState([]);
@@ -21,21 +23,38 @@ function MovieCarousel() {
   if (films.length === 0) return null;
 
   return (
-    <Carousel className="mb-4">
-      {films.map((film, idx) => (
+    <Carousel className="mb-4 movie-carousel" indicators={false}>
+      {films.map((film) => (
         <Carousel.Item key={film.id} interval={4000}>
-          <div
-            style={{
-              height: "400px",
-              backgroundImage: `url(/api/film/cover/${film.id})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-          <Carousel.Caption style={{ backgroundColor: "rgba(0,0,0,0.5)", borderRadius: "10px" }}>
-            <h3>{film.name}</h3>
-            <p>{film.description?.slice(0, 100)}...</p>
-          </Carousel.Caption>
+          <div style={{ height: "480px", position: "relative" }}>
+            <Link
+              to={`/player/${film.id}`}
+              style={{
+                display: "block",
+                height: "100%",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundImage: `url(/api/film/cover/${film.id})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+              <Carousel.Caption
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  borderRadius: "10px",
+                  padding: "10px",
+                }}
+              >
+                <h3>{film.name}</h3>
+                <p>{film.description?.slice(0, 100)}...</p>
+              </Carousel.Caption>
+            </Link>
+          </div>
         </Carousel.Item>
       ))}
     </Carousel>

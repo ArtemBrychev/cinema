@@ -11,17 +11,16 @@ const MovieCard = ({ movie, showRemoveButton = false, onRemove }) => {
 
   return (
     <Card style={{ width: '100%' }} border="0" className="mb-3 d-flex flex-row align-items-stretch">
-      {/* Блок с изображением - улучшенные стили */}
       {coverUrl && (
         <div style={{ 
-          width: '200px', // Увеличил ширину
-          minWidth: '200px', // Фиксированная минимальная ширина
+          width: '200px',
+          minWidth: '200px',
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '15px', // Увеличил отступы
-          overflow: 'hidden' // На случай, если изображение выходит за границы
+          padding: '15px',
+          overflow: 'hidden'
         }}>
           <img
             src={coverUrl}
@@ -29,19 +28,18 @@ const MovieCard = ({ movie, showRemoveButton = false, onRemove }) => {
             style={{ 
               width: '100%',
               height: 'auto',
-              maxHeight: '280px', // Увеличил максимальную высоту
-              objectFit: 'contain', // Изменил на 'contain' чтобы все изображение было видно
+              maxHeight: '280px',
+              objectFit: 'contain',
               borderRadius: '8px',
-              margin: '0 auto' // Центрирование
+              margin: '0 auto'
             }}
           />
         </div>
       )}
 
-      {/* Блок с контентом - добавил padding */}
       <Card.Body style={{ 
         flex: '1 1 auto',
-        padding: '20px' // Добавил отступы внутри блока
+        padding: '20px'
       }}>
         <Card.Title>{name}</Card.Title>
         <Card.Subtitle className="mb-2 text-muted">{director}</Card.Subtitle>

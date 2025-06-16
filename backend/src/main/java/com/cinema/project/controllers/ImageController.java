@@ -19,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageController {
     @Autowired
     S3Service s3Service;
+
+    private static final long MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
     
     @GetMapping("api/film/cover/{id}")
     public ResponseEntity<?> getFilmCover(@PathVariable long id){
@@ -32,6 +34,9 @@ public class ImageController {
 
     @PostMapping("api/change/userpic")
     public ResponseEntity<?> changeProfilePicture(@RequestParam("file") MultipartFile file, Principal principal){
+        if(file.getSize() > MAX_FILE_SIZE_BYTES){
+            return ResponseEntity.badRequest().body("Размер файла не должен превышать 5мб");
+        }
         return s3Service.uploadProfilePic(file, principal);
     }
 

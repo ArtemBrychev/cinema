@@ -59,9 +59,6 @@ public class SecurityConfig{
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(
-                            // Профиль пользователя
-                            "/api/profile/**",
-
                             // Управление избранным
                             "/api/likes",
                             "/api/newlike/**",

@@ -1,0 +1,17 @@
+.movie-carousel .carousel-control-prev-icon,
+.movie-carousel .carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.8);
+  mask-size: 100%;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  width: 40px;
+  height: 40px;
+}
+
+.movie-carousel .carousel-control-prev-icon {
+  mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'><path fill='black' d='M11 1L3 8L11 15'/></svg>");
+}
+
+.movie-carousel .carousel-control-next-icon {
+  mask-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'><path fill='black' d='M5 1L13 8L5 15'/></svg>");
+}

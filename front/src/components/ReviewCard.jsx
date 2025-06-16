@@ -3,6 +3,7 @@ import Card from 'react-bootstrap/Card';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Form, Button, Image } from 'react-bootstrap';
+import userPlaceholder from '../assets/user_placeholder.png';
 
 const getStyleAndLabel = (rating) => {
   if (rating >= 4) {
@@ -22,9 +23,11 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(reviewText);
   const [editedRating, setEditedRating] = useState(rating);
-  const [avatarSrc, setAvatarSrc] = useState(null);
+  const [avatarSrc, setAvatarSrc] = useState(userPlaceholder);
 
   useEffect(() => {
+    let currentUrl = null;
+
     const fetchAvatar = async () => {
       try {
         const response = await fetch(`/api/user/profilepic/${userId}`, {
@@ -33,21 +36,36 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
 
         if (response.ok) {
           const blob = await response.blob();
-          setAvatarSrc(URL.createObjectURL(blob));
+          const url = URL.createObjectURL(blob);
+          setAvatarSrc(url);
+          currentUrl = url;
+        } else {
+          setAvatarSrc(userPlaceholder);
         }
       } catch (err) {
-        console.error('Ошибка загрузки аватара:', err);
+        console.warn('Фотография отсутствует:', err.message);
+        setAvatarSrc(userPlaceholder);
       }
     };
 
     fetchAvatar();
 
     return () => {
-      if (avatarSrc) {
-        URL.revokeObjectURL(avatarSrc);
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
       }
     };
   }, [userId, token]);
+
+  useEffect(() => {
+    if (isEditing) {
+      const textarea = document.querySelector('.autosize-textarea');
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }
+  }, [isEditing, editedText]);
 
   const handleDelete = async () => {
     if (!window.confirm('Вы уверены, что хотите удалить отзыв?')) return;
@@ -106,38 +124,36 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
       backgroundColor, 
       color, 
       border: '0',
-      marginTop: '0.5rem' // Уменьшаем отступ сверху
+      marginTop: '0.5rem'
     }} className="mb-3 d-flex flex-row">
-      {/* Блок с аватаром (теперь кликабельный) */}
       <Link 
         to={`/user_profile/${userId}`}
         style={{
           width: '80px',
           minWidth: '80px',
           display: 'flex',
-          alignItems: 'flex-start', // Выравниваем по верхнему краю
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          padding: '10px 10px 10px 0', // Убираем левый padding
+          padding: '10px 10px 10px 0',
           textDecoration: 'none'
         }}
       >
         <Image 
-          src={avatarSrc || '/default-avatar.jpg'} 
+          src={avatarSrc} 
           roundedCircle 
           style={{ 
             width: '60px', 
             height: '60px',
             objectFit: 'cover',
-            marginTop: '0.2rem' // Слегка смещаем вниз для визуального баланса
+            marginTop: '0.2rem'
           }}
           alt={`Аватар ${userName}`}
         />
       </Link>
 
-      {/* Блок с содержимым отзыва */}
       <Card.Body style={{ 
         flex: '1 1 auto',
-        paddingTop: '0.8rem' // Уменьшаем отступ сверху
+        paddingTop: '0.8rem'
       }}>
         <Card.Subtitle className="mb-2">
           <strong>Оценка: {rating}</strong> — {label} от{' '}
@@ -153,25 +169,60 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
               <Form.Control
                 as="textarea"
                 rows={3}
+                className="autosize-textarea"
                 value={editedText}
-                onChange={(e) => setEditedText(e.target.value)}
+                onChange={(e) => {
+                  setEditedText(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                style={{ 
+                  overflow: 'hidden',
+                  resize: 'none',
+                  minHeight: '100px'
+                }}
               />
             </Form.Group>
             <Form.Group className="mb-2">
-              <Form.Label>Оценка</Form.Label>
-              <Form.Control
-                type="number"
-                min="1"
-                max="5"
-                value={editedRating}
-                onChange={(e) => setEditedRating(Number(e.target.value))}
-              />
+              <Form.Label>Оценка (1–5)</Form.Label>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={editedRating}
+                  onChange={(e) => setEditedRating(Number(e.target.value))}
+                  required
+                  style={{
+                    width: "80px",
+                    marginRight: "10px",
+                    textAlign: "center"
+                  }}
+                />
+                <div>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setEditedRating(prev => Math.min(prev + 1, 5))}
+                    className="me-1"
+                  >
+                    +
+                  </Button>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setEditedRating(prev => Math.max(prev - 1, 1))}
+                  >
+                    −
+                  </Button>
+                </div>
+              </div>
             </Form.Group>
             <Button size="sm" variant="success" onClick={handleUpdate} className="me-2">
-              💾 Сохранить
+              Сохранить
             </Button>
             <Button size="sm" variant="secondary" onClick={() => setIsEditing(false)}>
-              ❌ Отмена
+              Отмена
             </Button>
           </>
         ) : (
@@ -180,10 +231,10 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
             {isOwn && (
               <div className="mt-2">
                 <Button variant="warning" size="sm" onClick={() => setIsEditing(true)} className="me-2">
-                  ✏️ Изменить
+                  Изменить
                 </Button>
                 <Button variant="danger" size="sm" onClick={handleDelete}>
-                  🗑️ Удалить
+                  Удалить
                 </Button>
               </div>
             )}
@@ -192,8 +243,8 @@ const ReviewCard = ({ review, isOwn, onDelete, onUpdate }) => {
 
         <Card.Footer style={{ 
           color: 'rgba(0, 0, 0, 0.5)',
-          padding: '0.5rem 0', // Уменьшаем отступы футера
-          marginTop: '0.5rem' // Поднимаем футер выше
+          padding: '0.5rem 0',
+          marginTop: '0.5rem'
         }}>
           Дата отзыва: {reviewDate}
         </Card.Footer>

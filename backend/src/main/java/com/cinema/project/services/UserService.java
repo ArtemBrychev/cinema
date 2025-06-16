@@ -82,6 +82,11 @@ public class UserService{
 
     public ResponseEntity<?> getUserProfileInfo(long id, Principal principal){
         User requestUser = userRepository.findById(id);
+        if(principal == null){
+            UserPublicResponse userPublicResponse = new UserPublicResponse();
+            userPublicResponse.valueOf(requestUser);
+            return ResponseEntity.ok(userPublicResponse);
+        }
         User currentUser = userRepository.findByEmail(principal.getName());
         if (requestUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

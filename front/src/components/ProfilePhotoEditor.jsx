@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Image, Button, Modal, Spinner } from "react-bootstrap";
+import { Image, Button, Modal, Spinner, Alert } from "react-bootstrap";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageUtil";
 
@@ -9,11 +9,27 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [error, setError] = useState(null);
+  const MAX_FILE_SIZE_MB = 5;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file || file.type !== "image/jpeg") {
-      alert("Пожалуйста, выберите .jpg файл");
+    
+    // Сброс предыдущей ошибки
+    setError(null);
+    
+    if (!file) return;
+
+    // Проверка типа файла
+    if (!file.type.match('image/jpeg|image/jpg')) {
+      setError("Пожалуйста, выберите файл в формате JPG");
+      return;
+    }
+
+    // Проверка размера файла
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`Размер файла не должен превышать ${MAX_FILE_SIZE_MB} МБ`);
       return;
     }
 
@@ -21,6 +37,9 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
     reader.onload = () => {
       setImageSrc(reader.result);
       setShowCropper(true);
+    };
+    reader.onerror = () => {
+      setError("Ошибка при чтении файла");
     };
     reader.readAsDataURL(file);
   };
@@ -30,20 +49,46 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
   }, []);
 
   const handleCropSave = async () => {
-    const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
-    const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
-    onImageSelect(file);
-    setShowCropper(false);
-    setImageSrc(null);
+    try {
+      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+      const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+      
+      // Проверка размера после обрезки
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setError(`После обрезки размер файла всё ещё превышает ${MAX_FILE_SIZE_MB} МБ`);
+        return;
+      }
+      
+      onImageSelect(file);
+      setShowCropper(false);
+      setImageSrc(null);
+    } catch (err) {
+      setError("Ошибка при обработке изображения");
+      console.error("Crop error:", err);
+    }
   };
 
   return (
     <div className="text-center">
       <Image src={src} roundedCircle width={200} height={200} className="mb-3" />
+      
+      {/* Блок с ошибками */}
+      {error && (
+        <Alert variant="danger" className="mb-3" onClose={() => setError(null)} dismissible>
+          {error}
+        </Alert>
+      )}
+      
       <div className="d-grid gap-2">
         <Button as="label" variant="outline-primary" disabled={disabled}>
           Изменить фото
-          <input type="file" accept=".jpg" hidden onChange={handleFileChange} disabled={disabled} />
+          <input 
+            type="file" 
+            accept=".jpg,.jpeg" 
+            hidden 
+            onChange={handleFileChange} 
+            disabled={disabled} 
+          />
         </Button>
         <Button variant="outline-danger" onClick={onDelete} disabled={disabled}>
           {disabled ? (

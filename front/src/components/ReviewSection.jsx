@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReviewCard from './ReviewCard';
 import { useAuth } from '../context/AuthContext';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Alert, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function ReviewSection({ filmId }) {
@@ -10,24 +10,21 @@ function ReviewSection({ filmId }) {
   const [rating, setRating] = useState(3);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [checkingReview, setCheckingReview] = useState(true);
+  const [error, setError] = useState(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const { isAuthenticated, token, user } = useAuth(); // ✅ добавили user
+  const { isAuthenticated, token, user } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ Загрузка отзывов с учетом авторизации
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         const response = await fetch(`/api/films/reviews/${filmId}`, {
-          headers: isAuthenticated
-            ? { Authorization: `Bearer ${token}` }
-            : {}
+          headers: isAuthenticated ? { Authorization: `Bearer ${token}` } : {}
         });
 
         if (!response.ok) throw new Error('Ошибка загрузки отзывов');
         const data = await response.json();
-
-
         setReviews(data);
       } catch (err) {
         console.error('Ошибка при загрузке отзывов:', err);
@@ -37,7 +34,6 @@ function ReviewSection({ filmId }) {
     fetchReviews();
   }, [filmId, isAuthenticated, token]);
 
-  // ✅ Проверка: оставлял ли пользователь отзыв
   useEffect(() => {
     const checkUserReview = async () => {
       if (!isAuthenticated || !token) {
@@ -67,9 +63,10 @@ function ReviewSection({ filmId }) {
     checkUserReview();
   }, [filmId, isAuthenticated, token]);
 
-  // ✅ Отправка нового отзыва
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setShowErrorModal(false);
 
     try {
       const response = await fetch('/api/newreview', {
@@ -85,13 +82,18 @@ function ReviewSection({ filmId }) {
         })
       });
 
-      if (!response.ok) throw new Error('Ошибка при добавлении отзыва');
+      const result = await response.text();
+
+      if (!response.ok) {
+        setError(result);
+        setShowErrorModal(true);
+        return;
+      }
 
       setText('');
       setRating(3);
       setHasReviewed(true);
 
-      // Перезагрузка отзывов
       const updated = await fetch(`/api/films/reviews/${filmId}`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -101,7 +103,8 @@ function ReviewSection({ filmId }) {
       const sorted = updatedReviews.sort((a, b) => new Date(b.reviewDate) - new Date(a.reviewDate));
       setReviews(sorted);
     } catch (err) {
-      console.error('Ошибка добавления отзыва:', err);
+      setError('Ошибка при добавлении отзыва');
+      setShowErrorModal(true);
     }
   };
 
@@ -125,24 +128,65 @@ function ReviewSection({ filmId }) {
               as="textarea"
               rows={3}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+              style={{ overflow: "hidden", resize: "none" }}
               required
             />
           </Form.Group>
           <Form.Group className="mb-2">
             <Form.Label>Оценка (1–5)</Form.Label>
-            <Form.Control
-              type="number"
-              min="1"
-              max="5"
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              required
-            />
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Form.Control
+                type="number"
+                min="1"
+                max="5"
+                value={rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+                required
+                style={{
+                  width: "80px",
+                  marginRight: "10px",
+                  textAlign: "center"
+                }}
+              />
+              <div>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => setRating(prev => Math.min(prev + 1, 5))}
+                  className="me-1"
+                >
+                  +
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => setRating(prev => Math.max(prev - 1, 1))}
+                >
+                  −
+                </Button>
+              </div>
+            </div>
           </Form.Group>
           <Button type="submit" variant="primary">Отправить</Button>
         </Form>
       )}
+
+      <Modal show={showErrorModal} onHide={() => setShowErrorModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ошибка</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{error}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowErrorModal(false)}>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <h4>Отзывы:</h4>
       {reviews.length === 0 ? (
@@ -158,7 +202,6 @@ function ReviewSection({ filmId }) {
               setReviews(reviews.map(r => r.id === updatedReview.id ? updatedReview : r))
             }
           />
-
         ))
       )}
     </div>

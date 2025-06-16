@@ -76,6 +76,15 @@ function EditProfilePages() {
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleStatusChange = (e) => {
+    const { value } = e.target;
+    setProfile((prev) => ({ ...prev, status: value }));
+    
+    // Auto-resize the textarea
+    e.target.style.height = "auto";
+    e.target.style.height = e.target.scrollHeight + "px";
+  };
+
   const handleSave = async () => {
     if (!profile.name.trim()) {
       alert("Имя не может быть пустым");
@@ -221,8 +230,9 @@ function EditProfilePages() {
                 name="status"
                 rows={3}
                 value={profile.status}
-                onChange={handleInput}
+                onChange={handleStatusChange}
                 disabled={saving}
+                style={{ overflow: "hidden", resize: "none" }}
               />
               <Form.Text muted>Максимум 1500 символов</Form.Text>
             </Form.Group>

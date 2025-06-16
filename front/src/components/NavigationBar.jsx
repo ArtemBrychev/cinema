@@ -28,10 +28,15 @@ function NavigationBar() {
         <Navbar.Brand as={Link} to="/">Главная</Navbar.Brand>
 
         <Nav className="me-auto">
-          {isAuthenticated && user?.id && (
-            <Nav.Link as={Link} to={userProfileLink}>Профиль</Nav.Link>
+          {isAuthenticated && (
+            <>
+              {user?.id && (
+                <Nav.Link as={Link} to={userProfileLink}>Профиль</Nav.Link>
+              )}
+              <Nav.Link as={Link} to="/favourites/">Избранное</Nav.Link>
+            </>
           )}
-          <Nav.Link as={Link} to="/favourites/">Избранное</Nav.Link>
+          
         </Nav>
 
         <Form className="d-flex me-2" onSubmit={handleSearchSubmit}>

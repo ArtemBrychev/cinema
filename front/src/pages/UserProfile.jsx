@@ -20,8 +20,6 @@ function UserProfile() {
   const [profileImageSrc, setProfileImageSrc] = useState(userImage);
 
   useEffect(() => {
-    if (!token || !user) return;
-
     async function fetchProfile() {
       setLoading(true);
       setError("");
@@ -29,11 +27,10 @@ function UserProfile() {
       setIsOwner(false);
 
       try {
-        const response = await axios.get(`/api/profile/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await axios.get(`/api/profile/${id}`, { headers });
         const data = response.data;
+
         if (!data?.name) throw new Error("Профиль не найден");
 
         setUserData(data);
@@ -44,7 +41,7 @@ function UserProfile() {
       } catch (err) {
         console.error("Ошибка загрузки профиля:", err);
         setError(err.response?.data?.error || err.message);
-        if (err.response?.status === 401) {
+        if (err.response?.status === 401 && token) {
           logout();
           navigate("/login");
         }
@@ -56,9 +53,8 @@ function UserProfile() {
     async function fetchUserReviews(userId) {
       setReviewsLoading(true);
       try {
-        const response = await axios.get(`/api/user/reviews/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await axios.get(`/api/user/reviews/${userId}`, { headers });
         setReviews(response.data);
       } catch (err) {
         console.error("Ошибка загрузки отзывов:", err);
@@ -69,14 +65,14 @@ function UserProfile() {
 
     async function fetchProfilePicture(userId) {
       try {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const response = await axios.get(`/api/user/profilepic/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
           responseType: "blob",
         });
         const imageUrl = URL.createObjectURL(response.data);
         setProfileImageSrc(imageUrl);
-      } catch (err) {
-        console.warn("Фотография профиля отсутствует:", err.message);
+      } catch {
         setProfileImageSrc(userImage);
       }
     }
@@ -106,7 +102,13 @@ function UserProfile() {
 
   if (loading) return <Spinner animation="border" className="mt-4" />;
   if (error) return <Alert variant="danger">{error}</Alert>;
-  if (!userData) return <Alert variant="warning">Профиль не найден</Alert>;
+  if (!userData) {
+    return (
+      <Alert variant="warning">
+        Профиль не найден. Возможно, вы не авторизованы или указанный пользователь не существует.
+      </Alert>
+    );
+  }
 
   return (
     <div className="p-3">
@@ -126,7 +128,7 @@ function UserProfile() {
             <p>{userData.status || "Пока ничего не указано..."}</p>
           </div>
 
-          {isOwner && (
+          {isOwner && user && (
             <div className="d-flex gap-2 mb-4 flex-wrap">
               <Button variant="primary" onClick={() => navigate("/editProfile/")}>
                 Редактировать профиль
