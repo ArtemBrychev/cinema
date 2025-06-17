@@ -1,3 +1,31 @@
+/*
+Компонент SearchPage - страница поиска фильмов.
+Основной функционал:
+- Поиск фильмов по названию и другим параметрам
+- Отображение результатов поиска
+- Сохранение поискового запроса в URL
+
+Функции:
+- performSearch - выполнение поискового запроса
+- handleSubmit - обработка отправки поисковой формы
+
+Запросы:
+- POST /api/search - выполнение поиска по строке запроса
+
+Состояния:
+- query - текущий поисковый запрос
+- results - массив найденных фильмов
+
+Хуки:
+- useSearchParams - получение параметров из URL
+- useNavigate - навигация между страницами
+
+Элементы:
+- Поисковая форма с полем ввода
+- Список результатов поиска (компоненты MovieCard)
+- Сообщение при отсутствии результатов
+*/
+
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Form, Button } from 'react-bootstrap';
@@ -10,7 +38,6 @@ function SearchPage() {
   const [results, setResults] = useState([]);
   const navigate = useNavigate();
 
-  // 🔍 Запрос на сервер
   const performSearch = (q) => {
     if (!q.trim()) {
       setResults([]);
@@ -27,14 +54,12 @@ function SearchPage() {
       .catch((err) => console.error('Ошибка поиска:', err));
   };
 
-  // 🔄 Срабатывает при загрузке страницы с query-параметром
   useEffect(() => {
     if (initialQuery) {
       performSearch(initialQuery);
     }
   }, [initialQuery]);
 
-  // 🔘 Обработка отправки формы поиска
   const handleSubmit = (e) => {
     e.preventDefault();
     navigate(`/search?q=${encodeURIComponent(query)}`);
@@ -45,7 +70,6 @@ function SearchPage() {
     <div className="container mt-4">
       <h2>Поиск фильмов</h2>
 
-      {/* 🔎 Форма поиска */}
       <Form className="d-flex my-3" onSubmit={handleSubmit}>
         <Form.Control
           type="search"
@@ -57,7 +81,6 @@ function SearchPage() {
         <Button type="submit" variant="primary">Поиск</Button>
       </Form>
 
-      {/* 📋 Результаты */}
       <h4>Результаты по запросу: "{initialQuery}"</h4>
       {results.length === 0 ? (
         <p>Ничего не найдено.</p>

@@ -1,3 +1,50 @@
+/*
+Компонент EditProfilePages - страница редактирования профиля пользователя.
+Основной функционал:
+- Редактирование основной информации профиля (имя, статус)
+- Управление фотографией профиля (загрузка, удаление)
+- Смена пароля
+- Управление аккаунтом (выход, удаление)
+
+Функции:
+- fetchProfile - загрузка данных профиля
+- fetchPhoto - загрузка фотографии профиля
+- handleInput - обработка изменения полей ввода
+- handleStatusChange - обработка изменения статуса с авторесайзом
+- handleSave - сохранение изменений профиля
+- handleDeletePhoto - удаление фотографии профиля
+- handlePasswordInput - обработка изменения полей пароля
+- handleSavePassword - сохранение нового пароля
+- handleLogout - выход из аккаунта
+- handleDeleteAccount - удаление аккаунта
+
+Запросы:
+- GET /api/profile/{id} - получение данных профиля
+- GET /api/user/profilepic/{id} - получение фотографии профиля
+- PUT /api/change/usernamtus - изменение имени и статуса
+- POST /api/change/userpic - загрузка фотографии профиля
+- DELETE /api/delete/profliepic - удаление фотографии профиля
+- PUT /api/change/userpassword - смена пароля
+- DELETE /api/delete/user - удаление аккаунта
+
+Состояния:
+- profile - данные профиля (имя, статус)
+- selectedImage - выбранное изображение для загрузки
+- profileImageSrc - URL текущего изображения профиля
+- loading - состояние загрузки данных
+- saving - состояние сохранения данных
+- deletingPhoto - состояние удаления фото
+- error - ошибки при работе с профилем
+- showPasswordModal - видимость модального окна смены пароля
+- passwordForm - данные формы смены пароля
+- savingPassword - состояние сохранения пароля
+
+Компоненты:
+- ProfilePhotoEditor - редактор фотографии профиля
+- Modal - модальное окно смены пароля
+- Form - форма редактирования данных
+*/
+
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -80,7 +127,6 @@ function EditProfilePages() {
     const { value } = e.target;
     setProfile((prev) => ({ ...prev, status: value }));
     
-    // Auto-resize the textarea
     e.target.style.height = "auto";
     e.target.style.height = e.target.scrollHeight + "px";
   };

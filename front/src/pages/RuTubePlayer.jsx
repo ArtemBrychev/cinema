@@ -1,3 +1,39 @@
+/*
+Компонент RuTubePlayer - страница просмотра фильма с плеером.
+Основной функционал:
+- Воспроизведение фильма через RuTube плеер
+- Управление избранным (добавление/удаление)
+- Отображение информации о фильме
+- Секция отзывов
+
+Функции:
+- fetchMovie - загрузка данных о фильме
+- checkIfLiked - проверка наличия в избранном
+- handleAddToFavourite - добавление в избранное
+- handleRemoveFromFavourite - удаление из избранного
+
+Запросы:
+- GET /api/films/film/{id} - получение данных фильма
+- GET /api/check/like/{id} - проверка избранного
+- POST /api/newlike/{id} - добавление в избранное
+- DELETE /api/delete/like/{id} - удаление из избранного
+
+Состояния:
+- movie - данные о фильме
+- isLiked - статус избранного
+- loading - состояние загрузки
+- error - сообщение об ошибке
+
+Контекст:
+- useAuth - данные аутентификации (isAuthenticated, token)
+
+Элементы:
+- Плеер RuTube
+- Информация о фильме (название, описание)
+- Кнопка управления избранным
+- Секция отзывов (ReviewSection)
+*/
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './RuTubePlayer.css';
@@ -69,7 +105,6 @@ function RuTubePlayer() {
         throw new Error('Не удалось добавить в избранное');
       }
 
-      // Явно устанавливаем состояние без дополнительной проверки
       setIsLiked(true);
       
     } catch (error) {

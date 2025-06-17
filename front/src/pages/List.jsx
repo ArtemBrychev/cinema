@@ -1,38 +1,64 @@
+/*
+Компонент List - страница списка фильмов с фильтрацией по категориям.
+Основной функционал:
+- Отображение карусели популярных фильмов
+- Фильтрация фильмов по категориям
+- Показ списка фильмов с возможностью фильтрации
+
+Функции:
+- fetchMovies - загрузка списка фильмов (с фильтрацией по категории)
+
+Запросы:
+- GET /api/films - получение всех фильмов
+- GET /api/films?categoryId={id} - получение фильмов по категории
+
+Состояния:
+- movies - массив фильмов
+- categoryId - ID выбранной категории (null если не выбрана)
+
+Компоненты:
+- MovieCarousel - карусель популярных фильмов
+- CategoryFilter - компонент фильтрации по категориям
+- MovieCard - карточка фильма
+
+Элементы:
+- Заголовок страницы
+- Фильтр по категориям
+- Список карточек фильмов
+*/
+
 import { useEffect, useState } from 'react';
 import { Row, Col } from "react-bootstrap";
 import MovieCard from '../components/MovieCard';
-import CategoryFilter from '../components/CategoryFilter'; // ⬅️ Добавили фильтр
+import CategoryFilter from '../components/CategoryFilter';
 import MovieCarousel from "../components/MovieCarousel";
 
-
 function List() {
-  const [movies, setMovies] = useState([]);  // Состояние для фильмов
-  const [categoryId, setCategoryId] = useState(null); // Здесь можно хранить ID категории, если нужно
+  const [movies, setMovies] = useState([]);
+  const [categoryId, setCategoryId] = useState(null);
 
-  // Функция для получения данных с сервера
   const fetchMovies = async () => {
     try {
-      let url = "/api/films"; // Базовый URL
+      let url = "/api/films";
       if (categoryId) {
-        url += `?categoryId=${categoryId}`;  // Если есть categoryId, добавляем его как query параметр
+        url += `?categoryId=${categoryId}`;
       }
 
-      console.log("Запрос: ", url)
-      const response = await fetch(url);  // Делаем GET запрос
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Ошибка при получении фильмов');
       }
       
-      const data = await response.json();  // Получаем JSON из ответа
-      setMovies(data);  // Обновляем состояние, чтобы отобразить фильмы
+      const data = await response.json();
+      setMovies(data);
     } catch (error) {
       console.error("Ошибка:", error);
     }
   };
 
   useEffect(() => {
-    fetchMovies(); // Запрашиваем фильмы при загрузке компонента
-  }, [categoryId]); // Если categoryId изменяется, повторно запрашиваем данные
+    fetchMovies();
+  }, [categoryId]);
 
   return (
     <div className='mt-4'>
@@ -41,7 +67,7 @@ function List() {
         <h1>Список фильмов</h1>
         
         <CategoryFilter onSelectionChange={(ids) => {
-          setCategoryId(ids.length > 0 ? ids[0] : null); // ⬅` Обновляем выбранную категорию
+          setCategoryId(ids.length > 0 ? ids[0] : null);
         }} />
 
       </div>

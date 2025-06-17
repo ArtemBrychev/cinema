@@ -4,6 +4,33 @@ import Badge from 'react-bootstrap/Badge';
 import Stack from 'react-bootstrap/Stack';
 import Spinner from 'react-bootstrap/Spinner';
 
+/*
+Компонент CategoryFilter - фильтр категорий с возможностью множественного выбора.
+Основной функционал:
+- Загрузка списка категорий с сервера
+- Выбор/снятие категорий через dropdown
+- Отображение выбранных категорий в виде badges
+- Удаление выбранных категорий по клику
+- Передача выбранных ID категорий в родительский компонент
+
+Функции:
+- isSelected - проверка выбрана ли категория
+- toggleCategory - переключение состояния выбора категории
+- removeCategory - удаление категории из выбранных
+
+Запросы:
+- GET /api/categories - получение списка категорий
+
+Состояния:
+- categories - список всех доступных категорий
+- selected - массив выбранных категорий
+- loading - состояние загрузки данных
+- error - ошибка при загрузке данных
+
+Пропсы:
+- onSelectionChange - callback при изменении выбранных категорий
+*/
+
 function CategoryFilter({ onSelectionChange }) {
   const [categories, setCategories] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -17,7 +44,7 @@ function CategoryFilter({ onSelectionChange }) {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json(); // expecting [{ id, name }]
+        const data = await response.json();
         setCategories(data);
       } catch (err) {
         console.error('Failed to fetch categories:', err);
@@ -43,7 +70,6 @@ function CategoryFilter({ onSelectionChange }) {
     setSelected(newSelected);
 
     if (onSelectionChange) {
-      // Notify parent component with just IDs
       onSelectionChange(newSelected.map((c) => c.id));
     }
   };

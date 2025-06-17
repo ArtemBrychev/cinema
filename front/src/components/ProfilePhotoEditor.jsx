@@ -1,3 +1,35 @@
+/*
+Компонент ProfilePhotoEditor - редактор фотографии профиля с возможностью обрезки.
+Основной функционал:
+- Отображение текущего аватара
+- Загрузка нового изображения
+- Обрезка изображения перед сохранением
+- Удаление текущего аватара
+
+Функции:
+- handleFileChange - обработка выбора файла с валидацией
+- onCropComplete - обработка завершения обрезки
+- handleCropSave - сохранение обрезанного изображения
+
+Состояния:
+- crop - текущая позиция обрезки
+- zoom - уровень масштабирования
+- croppedAreaPixels - область обрезки в пикселях
+- imageSrc - временный источник изображения для обрезки
+- showCropper - видимость модального окна обрезки
+- error - сообщение об ошибке
+
+Константы:
+- MAX_FILE_SIZE_MB - максимальный размер файла в МБ
+- MAX_FILE_SIZE_BYTES - максимальный размер файла в байтах
+
+Пропсы:
+- src - текущее изображение профиля
+- onImageSelect - callback при выборе нового изображения
+- onDelete - callback при удалении изображения
+- disabled - флаг блокировки взаимодействия
+*/
+
 import React, { useState, useCallback } from "react";
 import { Image, Button, Modal, Spinner, Alert } from "react-bootstrap";
 import Cropper from "react-easy-crop";
@@ -16,18 +48,15 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     
-    // Сброс предыдущей ошибки
     setError(null);
     
     if (!file) return;
 
-    // Проверка типа файла
     if (!file.type.match('image/jpeg|image/jpg')) {
       setError("Пожалуйста, выберите файл в формате JPG");
       return;
     }
 
-    // Проверка размера файла
     if (file.size > MAX_FILE_SIZE_BYTES) {
       setError(`Размер файла не должен превышать ${MAX_FILE_SIZE_MB} МБ`);
       return;
@@ -53,7 +82,6 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
       const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
       const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
       
-      // Проверка размера после обрезки
       if (file.size > MAX_FILE_SIZE_BYTES) {
         setError(`После обрезки размер файла всё ещё превышает ${MAX_FILE_SIZE_MB} МБ`);
         return;
@@ -72,7 +100,6 @@ function ProfilePhotoEditor({ src, onImageSelect, onDelete, disabled }) {
     <div className="text-center">
       <Image src={src} roundedCircle width={200} height={200} className="mb-3" />
       
-      {/* Блок с ошибками */}
       {error && (
         <Alert variant="danger" className="mb-3" onClose={() => setError(null)} dismissible>
           {error}

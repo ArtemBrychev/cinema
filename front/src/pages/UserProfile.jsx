@@ -1,3 +1,43 @@
+/*
+Компонент UserProfile - страница профиля пользователя.
+Основной функционал:
+- Отображение информации о пользователе
+- Показ аватара и статуса
+- Отображение списка отзывов пользователя
+- Управление профилем для владельца (редактирование, выход, удаление)
+
+Функции:
+- fetchProfile - загрузка данных профиля
+- fetchUserReviews - загрузка отзывов пользователя
+- fetchProfilePicture - загрузка аватара
+- handleLogout - выход из аккаунта
+- handleDeleteAccount - удаление аккаунта
+
+Запросы:
+- GET /api/profile/{id} - получение данных профиля
+- GET /api/user/reviews/{userId} - получение отзывов пользователя
+- GET /api/user/profilepic/{userId} - получение аватара
+- DELETE /api/delete/user - удаление аккаунта
+
+Состояния:
+- userData - данные профиля
+- isOwner - флаг владельца профиля
+- loading - состояние загрузки профиля
+- error - сообщение об ошибке
+- reviews - список отзывов
+- reviewsLoading - состояние загрузки отзывов
+- profileImageSrc - URL аватара
+
+Контекст:
+- useAuth - данные аутентификации (token, logout, user)
+
+Элементы:
+- Аватар пользователя
+- Основная информация (имя, email, статус)
+- Кнопки управления (для владельца)
+- Список отзывов (ProfileReviewCard)
+*/
+
 import React, { useEffect, useState } from "react";
 import { Image, Button, Spinner, Alert } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";

@@ -1,3 +1,33 @@
+/*
+Компонент ProfileReviewCard - карточка отзыва пользователя на фильм.
+Основной функционал:
+- Отображение отзыва с цветовой индикацией оценки
+- Показ обложки фильма
+- Навигация на страницу фильма
+
+Функции:
+- getStyleAndLabel - определение стилей и текста по рейтингу
+
+Пропсы:
+- review - объект с данными отзыва:
+  * filmId - ID фильма
+  * filmName - название фильма
+  * reviewText - текст отзыва
+  * rating - оценка (1-5)
+  * cloudKey - ключ для получения обложки
+
+Элементы:
+- Обложка фильма (если доступна)
+- Название фильма (ссылка на страницу)
+- Оценка с цветовой индикацией
+- Текст отзыва
+
+Стили:
+- Зеленый фон для оценок 4-5 ("Рекомендую")
+- Желтый фон для оценки 3 ("Смешанные чувства")
+- Красный фон для оценок 1-2 ("Не рекомендую")
+*/
+
 import React from 'react';
 import Card from 'react-bootstrap/Card';
 import { Link } from 'react-router-dom';
@@ -16,12 +46,10 @@ const ProfileReviewCard = ({ review }) => {
   const { filmId, filmName, reviewText, rating, cloudKey } = review;
   const { backgroundColor, color, label } = getStyleAndLabel(rating);
   
-  // URL для загрузки обложки фильма
   const coverUrl = cloudKey ? `/api/film/cover/${filmId}` : null;
 
   return (
     <Card style={{ backgroundColor, color, border: '0' }} className="mb-3 d-flex flex-row">
-      {/* Блок с обложкой фильма */}
       {coverUrl && (
         <div style={{ 
           width: '150px',
@@ -47,7 +75,6 @@ const ProfileReviewCard = ({ review }) => {
         </div>
       )}
 
-      {/* Блок с содержимым отзыва */}
       <Card.Body style={{ flex: '1 1 auto' }}>
         <Card.Title>
           <Link to={`/player/${filmId}`} style={{ color: 'inherit', textDecoration: 'none' }}>
